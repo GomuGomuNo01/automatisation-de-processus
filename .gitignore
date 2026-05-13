@@ -1,0 +1,29 @@
+# ── Credentials & configuration sensible ──────────────────────────────────────
+.env
+
+# ── Environnement virtuel ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Rapports générés (output horodatés, tous sous-dossiers) ──────────────────
+output/**/*.xlsx
+output/**/*.csv
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── IDEs & éditeurs ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
