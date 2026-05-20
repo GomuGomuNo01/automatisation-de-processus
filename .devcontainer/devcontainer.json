@@ -1,5 +1,5 @@
 {
-  "name": "Automatisation Delifruits",
+  "name": "Automatisation de processus",
   "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
 
   "postCreateCommand": "bash .devcontainer/setup.sh",
