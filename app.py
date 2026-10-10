@@ -13,10 +13,18 @@ La ligne de commande d'origine reste disponible : python main.py
 """
 
 import os
+import time
 
-import streamlit as st
+# Les hébergeurs tournent en UTC : la démo raisonne à l'heure française, comme la
+# ligne de commande sur un poste en France (horodatage des fichiers, journal,
+# « chaque vendredi à 08:00 » du mode PRODUCTION). RELAIS_TZ permet d'en changer.
+os.environ["TZ"] = os.environ.get("RELAIS_TZ", "Europe/Paris")
+if hasattr(time, "tzset"):  # absent sous Windows, où l'heure locale du poste s'applique
+    time.tzset()
 
-from webapp.api import creer_middlewares, creer_routes
+import streamlit as st  # noqa: E402
+
+from webapp.api import creer_middlewares, creer_routes  # noqa: E402
 
 PAGE_DE_REPLI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp", "fallback.py")
 

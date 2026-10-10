@@ -17,6 +17,7 @@ Ce guide explique comment publier l'interface web pour que n'importe qui puisse 
 - **Accès Internet sortant** vers `webscraper.io` (Cas 5) et `selenium.dev` (Cas 6). Si le site de scraping est injoignable, une copie récente du catalogue (`webapp/donnees/scraping_secours.json`) prend le relais et l'interface le signale.
 - **Pas de Chrome** : en ligne, Cas 5 et 6 passent par des requêtes HTTP (`webapp/navigateur.py`) qui lisent les mêmes pages que Selenium.
 - **Une seule instance** : les fichiers générés restent en mémoire une heure. Avec plusieurs instances, un lien de téléchargement pourrait arriver sur une autre instance.
+- **Heure française** : les hébergeurs tournent en UTC ; `app.py` règle le fuseau sur `Europe/Paris` (horodatage des fichiers, journal, « chaque vendredi à 08:00 »). Variable `RELAIS_TZ` pour en changer. La base des fuseaux est installée par `packages.txt` (Streamlit Cloud) et par le `Dockerfile`.
 - **Vérification de santé** : `/_stcore/health`.
 
 ---
