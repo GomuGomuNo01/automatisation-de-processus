@@ -1,0 +1,21 @@
+# Fichiers non envoyés à Cloud Build par « gcloud run deploy --source . »
+# (même logique que .dockerignore, plus l'historique git)
+.gcloudignore
+.git
+.gitignore
+.github
+.venv
+venv
+.idea
+.claude
+**/__pycache__
+**/*.py[cod]
+.pytest_cache
+.env
+*.env
+.streamlit/secrets.toml
+output/
+docs/
+tests/
+conftest.py
+requirements-dev.txt

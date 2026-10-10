@@ -31,6 +31,14 @@ def _chrome(headless: bool) -> webdriver.Chrome:
     return webdriver.Chrome(options=opts)
 
 
+def _note(el) -> int:
+    """Note sur 5 : attribut data-rating, sinon nombre d'etoiles affichees."""
+    try:
+        return int(el.find_element(By.CSS_SELECTOR, ".ratings [data-rating]").get_attribute("data-rating"))
+    except (NoSuchElementException, TypeError, ValueError):
+        return len(el.find_elements(By.CSS_SELECTOR, ".ratings .ws-icon-star, .ratings .glyphicon-star"))
+
+
 def run(url: str = None, output_dir: Path = None, headless: bool = True) -> None:
     """
     Scrape les produits d'un site e-commerce et exporte les donnees en Excel.
@@ -69,7 +77,7 @@ def run(url: str = None, output_dir: Path = None, headless: bool = True) -> None
                     "Produit":     el.find_element(By.CLASS_NAME, "title").get_attribute("title"),
                     "Prix":        el.find_element(By.CLASS_NAME, "price").text,
                     "Description": el.find_element(By.CLASS_NAME, "description").text,
-                    "Note (/ 5)":  len(el.find_elements(By.CSS_SELECTOR, ".ratings .glyphicon-star")),
+                    "Note (/ 5)":  _note(el),
                 })
             except NoSuchElementException:
                 pass

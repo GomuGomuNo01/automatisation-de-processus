@@ -16,6 +16,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
+from html import escape
 import config
 
 
@@ -25,7 +26,7 @@ def _construire_html(alertes: pd.DataFrame) -> str:
 
     lignes = "".join(
         f"<tr>"
-        f"<td style='padding:8px;border:1px solid #ddd'>{r['Produit']}</td>"
+        f"<td style='padding:8px;border:1px solid #ddd'>{escape(str(r['Produit']))}</td>"
         f"<td style='padding:8px;border:1px solid #ddd;color:red;text-align:center'>{int(r['Quantite'])}</td>"
         f"<td style='padding:8px;border:1px solid #ddd;text-align:center'>{int(r['Seuil_Minimum'])}</td>"
         f"</tr>"
@@ -55,6 +56,31 @@ def _construire_html(alertes: pd.DataFrame) -> str:
     </body></html>"""
 
 
+def construire_message(
+    alertes: pd.DataFrame,
+    rapport: bytes,
+    nom_rapport: str,
+    expediteur: str,
+    destinataire: str,
+) -> MIMEMultipart:
+    """Email d'alerte : tableau HTML des ruptures + rapport Excel en pièce jointe."""
+    msg = MIMEMultipart()
+    msg["From"]    = expediteur
+    msg["To"]      = destinataire
+    msg["Subject"] = (
+        f"[ALERTE STOCK] {len(alertes)} produit(s) en rupture - "
+        f"{datetime.now().strftime('%d/%m/%Y')}"
+    )
+    msg.attach(MIMEText(_construire_html(alertes), "html"))
+
+    pj = MIMEBase("application", "octet-stream")
+    pj.set_payload(rapport)
+    encoders.encode_base64(pj)
+    pj.add_header("Content-Disposition", f"attachment; filename={nom_rapport}")
+    msg.attach(pj)
+    return msg
+
+
 def run(inventaire_path: Path, output_dir: Path) -> None:
     """
     Lit l'inventaire, genere le rapport Excel et envoie l'email d'alerte.
@@ -78,23 +104,11 @@ def run(inventaire_path: Path, output_dir: Path) -> None:
     alertes.to_excel(rapport, index=False)
     print(f"  Rapport : {rapport.name}")
 
-    # Construction du mail
-    msg = MIMEMultipart()
-    msg["From"]    = config.EMAIL_EXPEDITEUR
-    msg["To"]      = config.EMAIL_DESTINATAIRE
-    msg["Subject"] = (
-        f"[ALERTE STOCK] {len(alertes)} produit(s) en rupture - "
-        f"{datetime.now().strftime('%d/%m/%Y')}"
+    # Construction du mail (piece jointe : le rapport Excel)
+    msg = construire_message(
+        alertes, rapport.read_bytes(), rapport.name,
+        config.EMAIL_EXPEDITEUR, config.EMAIL_DESTINATAIRE,
     )
-    msg.attach(MIMEText(_construire_html(alertes), "html"))
-
-    # Piece jointe
-    with open(rapport, "rb") as f:
-        pj = MIMEBase("application", "octet-stream")
-        pj.set_payload(f.read())
-        encoders.encode_base64(pj)
-        pj.add_header("Content-Disposition", f"attachment; filename={rapport.name}")
-        msg.attach(pj)
 
     # Envoi
     print(f"  Envoi vers {config.EMAIL_DESTINATAIRE} ...")

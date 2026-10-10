@@ -16,7 +16,11 @@ OUTPUT_DIR     = BASE_DIR / "output"
 PRODUCTION_DIR = DATA_DIR / "production"
 
 # ── Chargement du fichier .env ─────────────────────────────────────────────────
-load_dotenv(BASE_DIR / ".env")
+# En ligne (Streamlit Community Cloud, Render, Docker), il n'y a pas de .env :
+# le modele .env.example sert alors de configuration. Les variables deja
+# definies dans l'environnement (secrets de l'hebergeur) restent prioritaires.
+_ENV = BASE_DIR / ".env"
+load_dotenv(_ENV if _ENV.is_file() else BASE_DIR / ".env.example")
 
 
 def _require(key: str) -> str:

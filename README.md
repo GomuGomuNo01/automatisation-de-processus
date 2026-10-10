@@ -1,18 +1,24 @@
 # Automatisation Python — Pipeline d'entreprise
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-2.x-150458?logo=pandas&logoColor=white)
 ![Selenium](https://img.shields.io/badge/Selenium-4.x-43B02A?logo=selenium&logoColor=white)
 ![Excel](https://img.shields.io/badge/Excel-openpyxl-217346?logo=microsoftexcel&logoColor=white)
 ![Gmail](https://img.shields.io/badge/Email-Gmail%20SMTP-EA4335?logo=gmail&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-st.App-FF4B4B?logo=streamlit&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-pytest-0A9EDC?logo=pytest&logoColor=white)
 ![Status](https://img.shields.io/badge/Statut-Actif-brightgreen)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/GomuGomuNo01/automatisation-de-processus)
+
+[![Tester la démo en ligne](https://img.shields.io/badge/Tester%20la%20d%C3%A9mo-en%20ligne%2C%20sans%20installation-cff24a?style=for-the-badge&logo=streamlit&logoColor=black&labelColor=0f1311)](https://automatisation-de-processus-cedric.streamlit.app)
+
+![Relais, l'interface web du pipeline](docs/images/app-accueil.png)
 
 ---
 
 ## Table des matières
 
 - [Explication](#explication)
+- [Démo en ligne](#démo-en-ligne)
 - [Architecture technique](#architecture-technique)
 - [Structure des fichiers de données](#structure-des-fichiers-de-données)
 - [Flux de traitement détaillé](#flux-de-traitement-détaillé)
@@ -23,7 +29,9 @@
 - [Modes TEST et PRODUCTION](#modes-test-et-production)
 - [6 cas d'automatisation](#6-cas-dautomatisation)
 - [Cas d'usage métier](#cas-dusage-métier)
-- [Tester depuis GitHub Codespaces](#tester-depuis-github-codespaces)
+- [Interface web](#interface-web)
+- [Tests](#tests)
+- [Mise en ligne](#mise-en-ligne)
 - [Technologies](#technologies)
 - [Auteur](#auteur)
 
@@ -52,6 +60,22 @@ Normalement, tout ça se fait à la main. Ce projet le fait **automatiquement**,
 4. Si c'est grave (trop de ruptures), il remplit aussi un formulaire d'urgence
 5. Chaque semaine, il génère un rapport de production complet
 6. Régulièrement, il scrape les prix des concurrents sur internet
+
+---
+
+## Démo en ligne
+
+**[Ouvrir la démo](https://automatisation-de-processus-cedric.streamlit.app)**, sans installation ni inscription.
+
+1. Cliquez sur **Lancer le pipeline** : les six automatisations s'enchaînent sur un inventaire d'exemple, étape par étape, avec le journal en direct.
+2. Ou descendez jusqu'à la **démo interactive** : choisissez un inventaire (ou importez le vôtre en .xlsx/.csv), modifiez une quantité, réglez le seuil du formulaire et le mode TEST/PRODUCTION. Le panneau « Prévision » montre en direct ce que le pipeline va déclencher.
+3. Les résultats s'affichent par automatisation (stock, email, formulaire, production, prix, planification) et **les fichiers générés se téléchargent** : les mêmes que la ligne de commande, ou tous ensemble en .zip.
+
+| Résultats | Démo interactive | Mobile, thème sombre |
+|---|---|---|
+| ![Résultats du pipeline](docs/images/app-resultats.png) | ![Démo interactive](docs/images/app-demo.png) | ![Version mobile](docs/images/app-mobile.png) |
+
+> Hébergement gratuit : après 12 heures sans visite, Streamlit affiche une page de mise en veille ; cliquez sur le bouton de réveil puis patientez environ une minute.
 
 ---
 
@@ -332,7 +356,7 @@ config.get_scraping_url(inventaire)
     .title        ──► nom du produit
     .price        ──► prix affiché
     .description  ──► description courte
-    .glyphicon-star × N ──► note /5
+    [data-rating] ──► note /5
         │
         ▼
   pandas.DataFrame → output/<nom>/scraping_produits_YYYY-MM-DD_HH-MM.xlsx
@@ -400,15 +424,29 @@ Cycle de surveillance (toutes les X min/h)
 ## Structure du projet
 
 ```
-automatisation-delifruits/
+automatisation-de-processus/
 │
-├── main.py                          # Point d'entrée — 2 questions, tout le reste auto
+├── main.py                          # Point d'entrée CLI — 2 questions, tout le reste auto
+├── app.py                           # Point d'entrée web — st.App (frontend + API)
 ├── scheduler.py                     # PipelineScheduler — orchestre les 3 jobs
 ├── config.py                        # Configuration centrale (lit .env via _require)
 ├── .env                             # Credentials locaux (gitignore)
 ├── .env.example                     # Template — à copier en .env
-├── requirements.txt
+├── requirements.txt                 # Exécution (CLI + interface web)
+├── requirements-dev.txt             # + pytest, httpx
+├── Dockerfile · render.yaml         # Hébergement (voir docs/DEPLOIEMENT.md)
 ├── README.md
+│
+├── webapp/
+│   ├── api.py                       # Routes Starlette : pages, import, pipeline NDJSON, téléchargements
+│   ├── service.py                   # Le pipeline exécuté à la demande, fichiers gardés en mémoire 1 h
+│   ├── navigateur.py                # Cas 5 et 6 en HTTP (pas de Chrome chez l'hébergeur)
+│   ├── fallback.py                  # Page Streamlit « introuvable »
+│   ├── donnees/scraping_secours.json  # Copie du catalogue si le site ne répond pas
+│   └── static/                      # Frontend sans framework : HTML, CSS (tokens), modules JS
+│
+├── tests/                           # pytest : scripts, service, API (réseau simulé)
+├── .github/workflows/               # Tests, maintien en éveil de la démo
 │
 ├── scripts/
 │   ├── config.py                    # Redirecteur importlib → config.py racine
@@ -440,8 +478,8 @@ automatisation-delifruits/
 
 ### Prérequis
 
-- Python 3.10+
-- Google Chrome installé (pour Selenium — Cas 5 & 6)
+- Python 3.11+ (pandas 3)
+- Google Chrome installé (pour Selenium — Cas 5 & 6, en ligne de commande)
 
 ### Étapes
 
@@ -614,49 +652,49 @@ Léa sélectionne `inventaire_consommables_bureau.xlsx`. Si le nombre de rupture
 
 ---
 
-## Tester depuis GitHub Codespaces
+## Interface web
 
-**L'environnement se configure entièrement au premier lancement** — Python, dépendances, Chromium et le `.env` sont prêts sans aucune action manuelle.
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/GomuGomuNo01/automatisation-de-processus)
-
-> Au démarrage du Codespace, le script `.devcontainer/setup.sh` s'exécute automatiquement :
-> installe Chromium, installe les dépendances pip, et copie `.env.example` → `.env`.
-
-### Cas testables immédiatement (sans modifier `.env`)
+L'interface est un frontend sur mesure, sans framework ni étape de build, servi avec son API par `st.App` (Streamlit 1.65). Elle appelle **les mêmes fonctions que la ligne de commande** : `detecter_ruptures` (Cas 1), `fusionner` (Cas 2), `construire_message` (Cas 3) et la bibliothèque `schedule` avec les intervalles du `.env` (Cas 4).
 
 ```bash
-python scripts/cas1_stock.py      # Rapport de stock     → output/*/rapport_alerte_*.xlsx
-python scripts/cas2_fusion.py     # Rapport hebdomadaire → output/*/rapport_semaine_*.xlsx
-python scripts/cas5_scraping.py   # Scraping produits    → output/*/scraping_produits_*.xlsx
-python scripts/cas6_formulaire.py # Formulaire web automatique (headless)
+pip install -r requirements.txt
+streamlit run app.py          # → http://localhost:8501
 ```
 
-### Cas 3 — Email (credentials Gmail requis)
+| | Ligne de commande (`python main.py`) | Interface web (`app.py`) |
+|---|---|---|
+| Rythme | en boucle, selon le mode TEST ou PRODUCTION | un cycle complet par clic ; la planification est affichée (onglet Planification) |
+| Fichiers | écrits dans `output/<inventaire>/` | gardés en mémoire 1 h, téléchargeables un par un ou en .zip |
+| Cas 3 — email | envoyé par Gmail (SMTP SSL) | construit à l'identique, **non envoyé** : téléchargeable en `.eml` |
+| Cas 5 et 6 | Selenium pilote Chrome | requêtes HTTP sur les mêmes pages (aucun Chrome chez l'hébergeur) |
+| Inventaire | `data/inventaire_*.xlsx` | les 3 exemples, ou un fichier importé (.xlsx/.csv), quantités modifiables |
 
-Éditez le `.env` généré automatiquement et renseignez les 3 variables email :
+Le pipeline rend compte de sa progression en direct (flux NDJSON) : l'interface affiche chaque étape, sa décision (« 12 ruptures ≥ seuil 3 : formulaire déclenché ») et le journal, puis les résultats.
+
+**Design** : identité propre (« salle de contrôle » : graphite, papier, signal vert-volt, Space Grotesk, Geist et Geist Mono auto-hébergées), thèmes clair et sombre, responsive du mobile au grand écran, navigation clavier, `prefers-reduced-motion` respecté. Les couleurs des graphiques ont été validées (contraste ≥ 3:1, séparation pour les daltonismes) ; une rupture est toujours signalée par une icône et un libellé, jamais par la couleur seule.
+
+| Fonctionnement | Exécution |
+|---|---|
+| ![Narration du pipeline](docs/images/app-fonctionnement.png) | ![Exécution en direct](docs/images/app-execution.png) |
+
+---
+
+## Tests
 
 ```bash
-# Dans le terminal Codespaces :
-code .env   # ou nano .env
-
-# Renseignez :
-# EMAIL_EXPEDITEUR=votre.adresse@gmail.com
-# MOT_DE_PASSE_APP=xxxx xxxx xxxx xxxx
-# EMAIL_DESTINATAIRE=destinataire@exemple.com
-
-python scripts/cas3_email.py
+pip install -r requirements-dev.txt
+pytest
 ```
 
-### Pipeline complet en mode TEST (résultats en ~3 minutes)
+Les tests couvrent les fonctions partagées avec la CLI, l'import de fichiers, la validation, la planification, le pipeline complet et les routes HTTP. Les deux sites de test sont simulés : aucune dépendance au réseau. Ils tournent sur GitHub Actions à chaque push.
 
-```bash
-python main.py
-# → Sélectionnez un inventaire
-# → Choisissez le mode TEST
-# → Observez les 3 jobs s'exécuter automatiquement
-# → Ctrl+C pour arrêter
-```
+---
+
+## Mise en ligne
+
+La démo est faite pour **Streamlit Community Cloud** (gratuit, sans carte bancaire) : [share.streamlit.io](https://share.streamlit.io) > **Create app** > ce dépôt, branche `main`, fichier `app.py`, Python 3.12. Aucun secret n'est nécessaire.
+
+Render (`render.yaml`), Google Cloud Run et Docker sont aussi prêts : voir le guide complet, [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
 
 ---
 
@@ -669,6 +707,8 @@ python main.py
 | `python-dotenv` | >= 1.0  | Chargement `.env` → variables Python                    |
 | `schedule`      | >= 1.2  | Planification des tâches récurrentes                    |
 | `selenium`      | >= 4.43 | Automatisation Chrome headless (scraping & formulaires) |
+| `streamlit`     | 1.65    | Serveur de l'interface web (`st.App` + routes Starlette) |
+| `pytest`, `httpx` | dev   | Tests du pipeline et de l'API                           |
 
 ---
 

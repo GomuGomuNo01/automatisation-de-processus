@@ -1,0 +1,285 @@
+/* ==========================================================================
+   DESIGN TOKENS — Relais
+   Source unique des valeurs visuelles : couleurs, typographie, espacements,
+   rayons, ombres, motion, plans. Aucun composant n'utilise de valeur arbitraire.
+
+   Identité : une « salle de contrôle » sobre. Graphite, papier, un seul signal
+   vert-volt, des lignes fines plutôt que des ombres, le monospace pour tout ce
+   que la machine écrit (journaux, fichiers, horaires).
+
+   Breakpoints (les media queries CSS ne lisent pas les variables, ces valeurs
+   sont donc reprises telles quelles, toujours les mêmes) :
+     sm  30em  (480px)   grands smartphones
+     md  48em  (768px)   tablettes
+     lg  64em  (1024px)  laptops
+     xl  80em  (1280px)  desktop
+   ========================================================================== */
+
+/* Replis calibrés : le chargement des polices ne décale pas le texte */
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 104%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Space Grotesk Fallback";
+  src: local("Arial"), local("Helvetica Neue"), local("Helvetica");
+  size-adjust: 103%;
+  ascent-override: 95%;
+  descent-override: 28%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/Geist-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/SpaceGrotesk-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../fonts/GeistMono-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+
+  /* ---------- Couleurs : thème clair « papier » ---------- */
+  --color-bg:            #f4f3ee;
+  --color-bg-grid:       rgba(15, 19, 17, 0.055);
+  --color-surface:       #fbfaf7;
+  --color-surface-2:     #efeee8;
+  --color-surface-3:     #e6e4dc;
+  --color-raised:        #ffffff;
+  --color-ink:           #0f1311;
+  --color-ink-2:         #3e4742;
+  --color-ink-3:         #5b6660;
+  --color-border:        rgba(15, 19, 17, 0.10);
+  --color-border-strong: rgba(15, 19, 17, 0.20);
+
+  /* Signal (marque) : le vert-volt sert de surface et de repère, jamais de texte sur clair */
+  --color-signal:        #cff24a;
+  --color-signal-soft:   rgba(160, 200, 20, 0.16);
+  --color-signal-line:   rgba(77, 124, 15, 0.38);
+  --color-signal-ink:    #47700c;          /* texte « signal » : 5,6:1 sur le papier */
+  --color-on-signal:     #0b0f05;
+
+  /* Bouton principal : encre en clair, volt en sombre */
+  --color-primary:        #0f1311;
+  --color-primary-hover:  #232a26;
+  --color-primary-active: #000000;
+  --color-on-primary:     #f4f3ee;
+  --color-primary-accent: #cff24a;         /* flèche et pastille dans le bouton */
+
+  --color-success:       #0f7a55;
+  --color-success-soft:  rgba(15, 122, 85, 0.10);
+  --color-danger:        #b8322a;
+  --color-danger-soft:   rgba(184, 50, 42, 0.09);
+  --color-warning:       #8a5a00;
+  --color-warning-soft:  rgba(214, 150, 20, 0.13);
+
+  /* Console : toujours sombre, dans les deux thèmes */
+  --console-bg:      #090c0b;
+  --console-border:  rgba(237, 242, 236, 0.10);
+  --console-ink:     #d9e2dc;
+  --console-ink-2:   #8d9a93;
+  --console-signal:  #cff24a;
+  --console-ok:      #63dba8;
+  --console-alert:   #f6c14b;
+  --console-error:   #ff7a6e;
+
+  /* Graphiques (validés : contraste ≥ 3:1, séparation daltonisme — voir README) */
+  --viz-series:   #4d7c0f;   /* une seule série : la production */
+  --viz-muted:    #7f8b84;   /* produits au-dessus du seuil (mise en retrait) */
+  --viz-critical: #d03b3b;   /* rupture — toujours avec icône + libellé */
+  --viz-marker:   #0f1311;   /* repère du seuil */
+  --viz-grid:     #e7e5df;
+  --viz-surface:  #ffffff;
+
+  --glow-signal: rgba(160, 205, 30, 0.22);
+
+  /* ---------- Typographie ---------- */
+  --font-display: "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif;
+  --font-sans:    "Geist", "Geist Fallback", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --text-display: clamp(2.625rem, 1.2rem + 5.4vw, 5.5rem);   /* H1 du hero */
+  --text-h1:      clamp(2rem, 1.45rem + 2.2vw, 3.25rem);      /* H1 des vues */
+  --text-h2:      clamp(2rem, 1.25rem + 3vw, 3.75rem);
+  --text-h3:      clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  --text-lead:    clamp(1.0625rem, 0.98rem + 0.45vw, 1.3125rem);
+  --text-body:    1.0625rem;
+  --text-small:   0.9375rem;
+  --text-xs:      0.8125rem;
+  --text-mono:    0.8125rem;
+  --text-figure:  clamp(2rem, 1.6rem + 1.6vw, 2.75rem);      /* valeur des tuiles chiffrées */
+
+  --leading-tight: 0.98;
+  --leading-snug:  1.18;
+  --leading-body:  1.62;
+
+  --tracking-display: -0.045em;
+  --tracking-title:   -0.03em;
+  --tracking-mono:    0.12em;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ---------- Espacements (4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96 / 128) ---------- */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.5rem;
+  --space-6:  2rem;
+  --space-7:  3rem;
+  --space-8:  4rem;
+  --space-9:  6rem;
+  --space-10: 8rem;
+
+  --section-pad: clamp(var(--space-8), 10vw, var(--space-10));
+  --gutter:      clamp(var(--space-4), 4vw, var(--space-6));
+  --container:   76rem;
+  --container-narrow: 46rem;
+  --header-h:    4.25rem;
+  --grid-cell:   48px;          /* maille du quadrillage de fond */
+
+  /* ---------- Rayons : nets, presque techniques ---------- */
+  --radius-xs:   3px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 999px;
+
+  /* ---------- Ombres : rares, l'identité repose sur les traits ---------- */
+  --shadow-xs: 0 1px 0 rgba(15, 19, 17, 0.04);
+  --shadow-sm: 0 1px 2px rgba(15, 19, 17, 0.05), 0 4px 12px -6px rgba(15, 19, 17, 0.10);
+  --shadow-md: 0 2px 6px rgba(15, 19, 17, 0.05), 0 16px 32px -16px rgba(15, 19, 17, 0.18);
+  --shadow-lg: 0 30px 70px -30px rgba(15, 19, 17, 0.35);
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px #47700c;
+
+  /* ---------- Motion ---------- */
+  /* Durées : micro-interaction / survol / composant / transition / complexe */
+  --dur-micro:      120ms;
+  --dur-hover:      180ms;
+  --dur-component:  260ms;
+  --dur-transition: 380ms;
+  --dur-complex:    640ms;
+
+  /* Courbes : sortie franche et douce (par défaut), entrée-sortie, entrée */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.7, 0, 0.3, 1);
+  --ease-in:     cubic-bezier(0.7, 0, 0.84, 0);
+
+  /* Amplitudes : un mouvement ne dépasse jamais 20px */
+  --move-xs: 2px;
+  --move-sm: 4px;
+  --move-md: 12px;
+  --move-lg: 20px;
+  --scale-in: 0.97;
+  --stagger: 70ms;
+  --stagger-tight: 35ms;
+
+  /* Fonctionnel (jamais décoratif) : indicateurs de chargement */
+  --dur-loop-spin: 720ms;
+  --dur-loop-shimmer: 1400ms;
+  --dur-loop-pulse: 1600ms;
+
+  /* ---------- Plans ---------- */
+  --z-base:    1;
+  --z-sticky:  20;
+  --z-header:  50;
+  --z-menu:    60;
+  --z-toast:   80;
+  --z-dialog:  90;
+  --z-tooltip: 100;
+}
+
+/* ---------- Thème sombre « graphite » : composé, pas inversé ----------
+   Activé par data-theme="dark" sur <html> (script en tête de index.html :
+   choix du visiteur, sinon préférence du système). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg:            #0a0d0c;
+  --color-bg-grid:       rgba(207, 242, 74, 0.045);
+  --color-surface:       #111614;
+  --color-surface-2:     #161d1a;
+  --color-surface-3:     #1d2622;
+  --color-raised:        #141a17;
+  --color-ink:           #edf2ec;
+  --color-ink-2:         #b3c0b8;
+  --color-ink-3:         #8a978f;
+  --color-border:        rgba(237, 242, 236, 0.09);
+  --color-border-strong: rgba(237, 242, 236, 0.18);
+
+  --color-signal:        #cff24a;
+  --color-signal-soft:   rgba(207, 242, 74, 0.10);
+  --color-signal-line:   rgba(207, 242, 74, 0.38);
+  --color-signal-ink:    #d6f56a;
+  --color-on-signal:     #0b0f05;
+
+  --color-primary:        #cff24a;
+  --color-primary-hover:  #dbf774;
+  --color-primary-active: #bde033;
+  --color-on-primary:     #0b0f05;
+  --color-primary-accent: #0b0f05;
+
+  --color-success:       #63dba8;
+  --color-success-soft:  rgba(99, 219, 168, 0.11);
+  --color-danger:        #ff7a6e;
+  --color-danger-soft:   rgba(255, 122, 110, 0.11);
+  --color-warning:       #f6c14b;
+  --color-warning-soft:  rgba(246, 193, 75, 0.11);
+
+  --console-bg:      #070908;
+
+  --viz-series:   #7f9f22;
+  --viz-muted:    #7c8a83;
+  --viz-critical: #e5544a;
+  --viz-marker:   #edf2ec;
+  --viz-grid:     #1f2723;
+  --viz-surface:  #111614;
+
+  --glow-signal: rgba(207, 242, 74, 0.16);
+
+  --shadow-xs: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.35), 0 16px 32px -16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 30px 70px -30px rgba(0, 0, 0, 0.8);
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px #cff24a;
+}
+
+/* ---------- Mouvement réduit : seules les animations fonctionnelles restent ---------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-micro:      1ms;
+    --dur-hover:      1ms;
+    --dur-component:  120ms;  /* fondus d'état conservés, sans déplacement */
+    --dur-transition: 120ms;
+    --dur-complex:    1ms;
+    --move-xs: 0px;
+    --move-sm: 0px;
+    --move-md: 0px;
+    --move-lg: 0px;
+    --scale-in: 1;
+    --stagger: 0ms;
+    --stagger-tight: 0ms;
+  }
+}

@@ -1,0 +1,16 @@
+# Thème de la page de repli Streamlit (adresses inconnues), aligné sur les tokens du frontend
+[theme]
+base = "dark"
+primaryColor = "#cff24a"
+backgroundColor = "#0a0d0c"
+secondaryBackgroundColor = "#151c19"
+textColor = "#edf2ec"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"

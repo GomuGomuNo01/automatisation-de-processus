@@ -1,0 +1,210 @@
+{
+ "date": "2026-10-10",
+ "source": "webscraper.io (boutique de test)",
+ "pages": {
+  "https://webscraper.io/test-sites/e-commerce/allinone/phones/touch": [
+   {
+    "Produit": "Nokia 123",
+    "Prix": "$24.99",
+    "Description": "7 day battery",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "LG Optimus",
+    "Prix": "$57.99",
+    "Description": "3.2\" screen",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Samsung Galaxy",
+    "Prix": "$93.99",
+    "Description": "5 mpx. Android 5.0",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Nokia X",
+    "Prix": "$109.99",
+    "Description": "Andoid, Jolla dualboot",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Sony Xperia",
+    "Prix": "$118.99",
+    "Description": "GPS, waterproof",
+    "Note (/ 5)": 1
+   },
+   {
+    "Produit": "Ubuntu Edge",
+    "Prix": "$499.99",
+    "Description": "Sapphire glass",
+    "Note (/ 5)": 1
+   },
+   {
+    "Produit": "Iphone",
+    "Prix": "$899.99",
+    "Description": "White",
+    "Note (/ 5)": 1
+   },
+   {
+    "Produit": "Iphone",
+    "Prix": "$899.99",
+    "Description": "Silver",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Iphone",
+    "Prix": "$899.99",
+    "Description": "Black",
+    "Note (/ 5)": 1
+   }
+  ],
+  "https://webscraper.io/test-sites/e-commerce/allinone/computers/tablets": [
+   {
+    "Produit": "Lenovo IdeaTab",
+    "Prix": "$69.99",
+    "Description": "7\" screen, Android",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "IdeaTab A3500L",
+    "Prix": "$88.99",
+    "Description": "Black, 7\" IPS, Quad-Core 1.2GHz, 8GB, Android 4.2",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Acer Iconia",
+    "Prix": "$96.99",
+    "Description": "7\" screen, Android, 16GB",
+    "Note (/ 5)": 1
+   },
+   {
+    "Produit": "Galaxy Tab 3",
+    "Prix": "$97.99",
+    "Description": "7\", 8GB, Wi-Fi, Android 4.2, White",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Iconia B1-730HD",
+    "Prix": "$99.99",
+    "Description": "Black, 7\", 1.6GHz Dual-Core, 8GB, Android 4.4",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Memo Pad HD 7",
+    "Prix": "$101.99",
+    "Description": "IPS, Dual-Core 1.2GHz, 8GB, Android 4.3",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Asus MeMO Pad",
+    "Prix": "$102.99",
+    "Description": "7\" screen, Android, 8GB",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Amazon Kindle",
+    "Prix": "$103.99",
+    "Description": "6\" screen, wifi",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Galaxy Tab 3",
+    "Prix": "$107.99",
+    "Description": "7\", 8GB, Wi-Fi, Android 4.2, Yellow",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "IdeaTab A8-50",
+    "Prix": "$121.99",
+    "Description": "Blue, 8\" IPS, Quad-Core 1.3GHz, 16GB, Android 4.2",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "MeMO Pad 7",
+    "Prix": "$130.99",
+    "Description": "White, 7\", Atom 1.2GHz, 8GB, Android 4.4",
+    "Note (/ 5)": 1
+   },
+   {
+    "Produit": "IdeaTab A3500-H",
+    "Prix": "$148.99",
+    "Description": "Blue, 7\" IPS, Quad-Core 1.3GHz, 8GB, 3G, Android 4.2",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "IdeaTab S5000",
+    "Prix": "$172.99",
+    "Description": "Silver, 7\" IPS, Quad-Core 1.2Ghz, 16GB, 3G, Android 4.2",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Galaxy Tab 4",
+    "Prix": "$233.99",
+    "Description": "LTE (SM-T235), Quad-Core 1.2GHz, 8GB, Black",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Galaxy Tab",
+    "Prix": "$251.99",
+    "Description": "16GB, White",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "MeMo PAD FHD 10",
+    "Prix": "$320.99",
+    "Description": "White, 10.1\" IPS, 1.6GHz, 2GB, 16GB, Android 4.2",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Galaxy Note",
+    "Prix": "$399.99",
+    "Description": "10.1\", 3G, Android 4.0, Garnet Red",
+    "Note (/ 5)": 4
+   },
+   {
+    "Produit": "Galaxy Note",
+    "Prix": "$489.99",
+    "Description": "12.2\", 32GB, WiFi, Android 4.4, White",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "iPad Mini Retina",
+    "Prix": "$537.99",
+    "Description": "Wi-Fi + Cellular, 32GB, Silver",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Galaxy Note 10.1",
+    "Prix": "$587.99",
+    "Description": "10.1\", 32GB, Black",
+    "Note (/ 5)": 2
+   },
+   {
+    "Produit": "Apple iPad Air",
+    "Prix": "$603.99",
+    "Description": "Wi-Fi, 64GB, Silver",
+    "Note (/ 5)": 3
+   }
+  ],
+  "https://webscraper.io/test-sites/e-commerce/allinone/computers": [
+   {
+    "Produit": "Iconia B1-730HD",
+    "Prix": "$99.99",
+    "Description": "Black, 7\", 1.6GHz Dual-Core, 8GB, Android 4.4",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Acer Nitro 5 AN515-51",
+    "Prix": "$1140.62",
+    "Description": "Acer Nitro 5 AN515-51, 15.6\" FHD IPS, Core i7-7700HQ, 8GB, 256GB SSD +1TB, GeForce GTX 1050 Ti 4GB, Windows 10 Home + Windows 10 Home",
+    "Note (/ 5)": 3
+   },
+   {
+    "Produit": "Acer Aspire ES1-572 Black",
+    "Prix": "$454.62",
+    "Description": "Acer Aspire ES1-572 Black, 15.6\" HD, Core i5-7200U, 4GB, 500GB, Linux",
+    "Note (/ 5)": 1
+   }
+  ]
+ }
+}

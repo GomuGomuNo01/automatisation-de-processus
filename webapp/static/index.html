@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Relais · Automatisation de processus en Python</title>
+  <meta name="description" content="Surveillance de stock, alertes email, rapport hebdomadaire, relevé de prix et formulaire d'urgence : six automatisations Python enchaînées en un pipeline. Démo en ligne, sans installation.">
+  <meta name="theme-color" content="#f4f3ee">
+  <script>
+    /* Thème appliqué avant le premier affichage (pas de flash) : choix enregistré, sinon celui du système */
+    (function () {
+      var choix = null;
+      try { choix = localStorage.getItem('relais-theme'); } catch (e) {}
+      var sombre = choix ? choix === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = sombre ? 'dark' : 'light';
+      document.querySelector('meta[name="theme-color"]').content = sombre ? '#0a0d0c' : '#f4f3ee';
+    })();
+  </script>
+  <meta property="og:title" content="Relais · Automatisation de processus">
+  <meta property="og:description" content="Six automatisations Python enchaînées : stock, alertes, rapports, prix, formulaires. Testez le pipeline en ligne.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/Geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/SpaceGrotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/sections.css">
+  <link rel="stylesheet" href="assets/css/run.css">
+  <script>
+    /* Masque les éléments animés avant le premier rendu (sauf mouvement réduit).
+       Filet de sécurité : si le JavaScript ne démarre pas, tout redevient visible. */
+    (function () {
+      var root = document.documentElement;
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) root.classList.add('has-motion');
+      window.__motionGuard = setTimeout(function () { root.classList.remove('has-motion'); }, 3000);
+    })();
+  </script>
+  <script type="module" src="assets/js/main.js"></script>
+  <link rel="modulepreload" href="assets/js/motion.js">
+  <link rel="modulepreload" href="assets/js/ui.js">
+  <link rel="modulepreload" href="assets/js/format.js">
+  <link rel="modulepreload" href="assets/js/api.js">
+  <link rel="modulepreload" href="assets/js/hero.js">
+  <link rel="modulepreload" href="assets/js/demo.js">
+  <link rel="modulepreload" href="assets/js/run.js">
+  <link rel="modulepreload" href="assets/js/results.js">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+  <!-- Icônes (sprite SVG, aucune requête supplémentaire) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7 10l5-5 5 5M5 20h14"/></symbol>
+      <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 12.5h7M8.5 16h7M12 11v7"/></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5l8.5 6 8.5-6"/></symbol>
+      <symbol id="i-form" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/></symbol>
+      <symbol id="i-bars" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 10"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+      <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+      <symbol id="i-minus-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7L20 8.5"/><path d="M20 4v4.5h-4.5"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12.5 15H17"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-5"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3"/></symbol>
+      <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 3l14 7-6 2-2 6z"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"/></symbol>
+      <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 4a2 2 0 1 1 4 0v1h4v4h1a2 2 0 1 1 0 4h-1v5h-5v-1a2 2 0 1 0-4 0v1H5v-5h1a2 2 0 1 0 0-4H5V5h5z"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="i-zip" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M11 5h1M11 8h1M11 11h1M10.5 14h2v3h-2z"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Logo réutilisé (en-tête, pied de page) -->
+  <template id="tpl-logo">
+    <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect class="brand__mark-bg" x="1" y="1" width="30" height="30" rx="8"/>
+      <path class="brand__mark-fg" d="M7.5 21h5.5l6-10h5.5" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle class="brand__mark-dot" cx="7.5" cy="21" r="2.3"/>
+      <circle class="brand__mark-dot" cx="24.5" cy="11" r="2.3"/>
+    </svg>
+  </template>
+
+  <!-- ============ En-tête ============ -->
+  <header class="site-header" id="site-header" data-scrolled="false">
+    <div class="container site-header__inner">
+      <a class="brand" href="./" data-nav="accueil" aria-label="Relais, automatisation de processus — retour à l'accueil">
+        <span class="brand__slot" data-logo></span>
+        <span class="brand__name">Relais</span>
+        <span class="brand__tag">automatisation de processus</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Navigation principale">
+        <ul class="site-nav__list">
+          <li><a class="site-nav__link" href="#fonctionnement" data-spy="fonctionnement">Fonctionnement</a></li>
+          <li><a class="site-nav__link" href="#fonctionnalites" data-spy="fonctionnalites">Fonctionnalités</a></li>
+          <li><a class="site-nav__link" href="#demo" data-spy="demo">Démo</a></li>
+          <li><a class="site-nav__link" href="#faq" data-spy="faq">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <div class="site-header__actions">
+        <button class="btn btn--ghost btn--icon btn--sm theme-toggle" type="button" data-action="toggle-theme" aria-label="Activer le thème sombre">
+          <svg class="icon theme-toggle__moon" aria-hidden="true"><use href="#i-moon"/></svg>
+          <svg class="icon theme-toggle__sun" aria-hidden="true"><use href="#i-sun"/></svg>
+        </button>
+        <button class="btn btn--primary btn--sm header-cta" type="button" data-action="run-default">
+          <span class="btn__label">Lancer le pipeline<svg class="icon icon--sm btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+        </button>
+        <button class="btn btn--ghost btn--icon menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Ouvrir le menu">
+          <span class="menu-toggle__bars" aria-hidden="true"><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <nav class="container" aria-label="Navigation mobile">
+        <ul class="mobile-menu__list">
+          <li><a class="mobile-menu__link" href="#fonctionnement"><span class="mono">01</span>Fonctionnement</a></li>
+          <li><a class="mobile-menu__link" href="#fonctionnalites"><span class="mono">02</span>Fonctionnalités</a></li>
+          <li><a class="mobile-menu__link" href="#demo"><span class="mono">03</span>Démo</a></li>
+          <li><a class="mobile-menu__link" href="#faq"><span class="mono">04</span>FAQ</a></li>
+        </ul>
+        <button class="btn btn--primary btn--lg btn--block" type="button" data-action="run-default">
+          <span class="btn__label">Lancer le pipeline<svg class="icon btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div id="contenu" tabindex="-1"></div>
+
+  <!-- ==================================================================
+       VUE ACCUEIL
+       ================================================================== -->
+  <main class="view" id="vue-accueil">
+
+    <!-- ============ Hero ============ -->
+    <section class="hero" aria-labelledby="hero-titre" data-spotlight>
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="hero__spot" aria-hidden="true"></div>
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <p class="badge" data-reveal="fade-up" style="--reveal-index:0"><span class="badge__dot" aria-hidden="true"></span>Démo en ligne · aucune installation</p>
+          <h1 class="display hero__title" id="hero-titre" tabindex="-1" data-reveal="fade-up" style="--reveal-index:1">
+            Vos tâches répétitives <span class="hl" data-highlight>tournent toutes seules.</span>
+          </h1>
+          <p class="lead hero__lead" data-reveal="fade-up" style="--reveal-index:2">
+            Relais surveille vos stocks, envoie les alertes, compile la production de la semaine, relève les prix en ligne et remplit les formulaires d'urgence. Six automatisations Python, un seul pipeline&nbsp;: lancez-le ici, sur de vraies données.
+          </p>
+          <div class="hero__actions" data-reveal="fade-up" style="--reveal-index:3">
+            <button class="btn btn--primary btn--lg" type="button" data-action="run-default" data-magnetic>
+              <span class="btn__label">Lancer le pipeline<svg class="icon btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+            </button>
+            <a class="btn btn--secondary btn--lg" href="#demo">
+              <span class="btn__label">Configurer la démo<svg class="icon btn__arrow btn__arrow--down" aria-hidden="true"><use href="#i-arrow-down"/></svg></span>
+            </a>
+          </div>
+          <ul class="hero__meta" data-reveal="fade-up" style="--reveal-index:4">
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-clock"/></svg>Environ 1 seconde par cycle</li>
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sheet"/></svg>Jusqu'à 5 fichiers générés</li>
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-user"/></svg>Sans inscription</li>
+          </ul>
+        </div>
+
+        <!-- Tableau de bord illustratif : rejoue un cycle de surveillance -->
+        <figure class="hero__visual" data-reveal="scale-in" style="--reveal-index:3">
+          <div class="board corners" data-board data-tilt>
+            <div class="board__bar">
+              <span class="console__lights" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="board__title mono">relais · pipeline · inventaire_gaming_multimedia.xlsx</span>
+              <span class="board__state mono" data-board-state>prêt</span>
+            </div>
+            <ol class="board__flow" aria-hidden="true">
+              <li class="node" data-node="0"><span class="node__icon"><svg class="icon"><use href="#i-sheet"/></svg></span><span class="node__label">Inventaire</span><span class="node__meta mono">20 produits</span></li>
+              <li class="wire" data-wire="0"><span class="wire__pulse"></span></li>
+              <li class="node" data-node="1"><span class="node__icon"><svg class="icon"><use href="#i-scan"/></svg></span><span class="node__label">Détection</span><span class="node__meta mono">12 ruptures</span></li>
+              <li class="wire" data-wire="1"><span class="wire__pulse"></span></li>
+              <li class="node" data-node="2"><span class="node__icon"><svg class="icon"><use href="#i-mail"/></svg></span><span class="node__label">Alerte</span><span class="node__meta mono">email + .xlsx</span></li>
+              <li class="wire" data-wire="2"><span class="wire__pulse"></span></li>
+              <li class="node" data-node="3"><span class="node__icon"><svg class="icon"><use href="#i-form"/></svg></span><span class="node__label">Formulaire</span><span class="node__meta mono">12 ≥ 3</span></li>
+            </ol>
+            <div class="board__console" aria-hidden="true" data-board-console></div>
+            <div class="board__foot">
+              <span class="mono board__next" data-board-next>Cycle suivant dans 60 s · mode TEST</span>
+              <button class="btn btn--ghost btn--sm" type="button" data-action="replay-board">
+                <svg class="icon icon--sm" aria-hidden="true"><use href="#i-refresh"/></svg>Rejouer
+              </button>
+            </div>
+          </div>
+          <figcaption class="visually-hidden">Illustration d'un cycle de surveillance : l'inventaire est lu, 12 ruptures sont détectées, l'alerte email est préparée puis le formulaire d'urgence est soumis, car 12 ruptures dépassent le seuil de 3.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ Repères chiffrés ============ -->
+    <section class="facts" aria-label="Le projet en chiffres">
+      <div class="container">
+        <dl class="facts__grid">
+          <div class="fact" data-reveal="fade-up" style="--reveal-index:0"><dt class="fact__label">automatisations enchaînées</dt><dd class="fact__value" data-count="6">6</dd></div>
+          <div class="fact" data-reveal="fade-up" style="--reveal-index:1"><dt class="fact__label">inventaires d'exemple prêts</dt><dd class="fact__value" data-count="3">3</dd></div>
+          <div class="fact" data-reveal="fade-up" style="--reveal-index:2"><dt class="fact__label">questions pour tout lancer</dt><dd class="fact__value" data-count="2">2</dd></div>
+          <div class="fact" data-reveal="fade-up" style="--reveal-index:3"><dt class="fact__label">intervention ensuite</dt><dd class="fact__value" data-count="0">0</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <!-- ============ Avant / après ============ -->
+    <section class="section" id="avantages" aria-labelledby="avantages-titre">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">01</span>Avant / après</p>
+          <h2 class="h2" id="avantages-titre" data-reveal="fade-up" style="--reveal-index:1">La routine du matin, sans vous.</h2>
+          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Ce qui se faisait à la main, fichier par fichier, se fait désormais en boucle et au bon moment.</p>
+        </div>
+
+        <div class="compare" data-reveal="fade-up" style="--reveal-index:2">
+          <div class="compare__col compare__col--before">
+            <p class="compare__title mono">À la main</p>
+            <ul class="compare__list">
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus-circle"/></svg>Ouvrir chaque fichier Excel et repérer les stocks bas, chaque matin</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus-circle"/></svg>Rédiger l'email d'alerte et recopier la liste des produits</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus-circle"/></svg>Remplir le bon de commande urgent quand la situation devient critique</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus-circle"/></svg>Additionner la production des cinq jours le vendredi</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus-circle"/></svg>Relever les prix des concurrents site par site</li>
+            </ul>
+          </div>
+          <div class="compare__col compare__col--after">
+            <p class="compare__title mono"><span class="compare__mark" aria-hidden="true"></span>Avec Relais</p>
+            <ul class="compare__list">
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check-circle"/></svg>Stock contrôlé à chaque cycle, ruptures repérées en moins d'une seconde</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check-circle"/></svg>Email HTML prêt dès la première rupture, rapport Excel en pièce jointe</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check-circle"/></svg>Formulaire rempli et soumis tout seul au-delà du seuil critique</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check-circle"/></svg>Rapport hebdomadaire à deux onglets, chaque vendredi à 8&nbsp;h</li>
+              <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check-circle"/></svg>Catalogue en ligne relevé toutes les 4&nbsp;h et exporté en Excel</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Fonctionnement : narration au défilement ============ -->
+    <section class="section story-section" id="fonctionnement" aria-labelledby="fonctionnement-titre">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">02</span>Fonctionnement</p>
+          <h2 class="h2" id="fonctionnement-titre" data-reveal="fade-up" style="--reveal-index:1">Un pipeline, six automatisations.</h2>
+          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Chaque cas fait une chose et la fait bien. Le pipeline les enchaîne et décide, à chaque cycle, de ce qui doit partir.</p>
+        </div>
+
+        <div class="story" data-story>
+          <div class="story__visual" aria-hidden="true">
+            <div class="story__sticky">
+              <svg class="diagram" viewBox="0 0 520 470" data-diagram>
+                <!-- Cas 4 : le planificateur encadre les tâches qu'il relance -->
+                <g class="dg dg--frame" data-dg="cas4">
+                  <rect class="dg__frame" x="222" y="24" width="170" height="432" rx="14"/>
+                  <text class="dg__num" x="238" y="50">4</text>
+                  <text class="dg__label" x="252" y="50">Planificateur</text>
+                  <text class="dg__meta" x="238" y="67">schedule · TEST / PROD</text>
+                </g>
+                <!-- Entrées -->
+                <g class="dg" data-dg="in-stock">
+                  <rect class="dg__box dg__box--io" x="16" y="110" width="176" height="52" rx="10"/>
+                  <text class="dg__label" x="32" y="133">Inventaire</text>
+                  <text class="dg__meta" x="32" y="150">inventaire_*.xlsx</text>
+                </g>
+                <g class="dg" data-dg="in-prod">
+                  <rect class="dg__box dg__box--io" x="16" y="270" width="176" height="52" rx="10"/>
+                  <text class="dg__label" x="32" y="293">Production</text>
+                  <text class="dg__meta" x="32" y="310">Lundi.csv … Vendredi.csv</text>
+                </g>
+                <g class="dg" data-dg="in-web">
+                  <rect class="dg__box dg__box--io" x="16" y="390" width="176" height="52" rx="10"/>
+                  <text class="dg__label" x="32" y="413">Site e-commerce</text>
+                  <text class="dg__meta" x="32" y="430">catalogue en ligne</text>
+                </g>
+                <!-- Fils -->
+                <path class="dg__wire" data-dw="cas1" d="M192 136 H238"/>
+                <path class="dg__wire" data-dw="cas2" d="M192 296 H238"/>
+                <path class="dg__wire" data-dw="cas5" d="M192 416 H238"/>
+                <path class="dg__wire" data-dw="cas3" d="M382 127 C410 127 408 96 436 96"/>
+                <path class="dg__wire" data-dw="cas6" d="M382 145 C410 145 408 186 436 186"/>
+                <text class="dg__cond" x="404" y="90">&gt; 0</text>
+                <text class="dg__cond" x="392" y="230">≥ seuil</text>
+                <!-- Traitements -->
+                <g class="dg" data-dg="cas1">
+                  <rect class="dg__box" x="238" y="110" width="144" height="52" rx="10"/>
+                  <text class="dg__num" x="252" y="133">1</text>
+                  <text class="dg__label" x="268" y="133">Détection</text>
+                  <text class="dg__meta" x="252" y="150">ruptures · .xlsx</text>
+                </g>
+                <g class="dg" data-dg="cas2">
+                  <rect class="dg__box" x="238" y="270" width="144" height="52" rx="10"/>
+                  <text class="dg__num" x="252" y="293">2</text>
+                  <text class="dg__label" x="268" y="293">Rapport hebdo</text>
+                  <text class="dg__meta" x="252" y="310">2 onglets · .xlsx</text>
+                </g>
+                <g class="dg" data-dg="cas5">
+                  <rect class="dg__box" x="238" y="390" width="144" height="52" rx="10"/>
+                  <text class="dg__num" x="252" y="413">5</text>
+                  <text class="dg__label" x="268" y="413">Scraping</text>
+                  <text class="dg__meta" x="252" y="430">prix · notes · .xlsx</text>
+                </g>
+                <!-- Sorties -->
+                <g class="dg" data-dg="cas3">
+                  <rect class="dg__box" x="436" y="70" width="76" height="52" rx="10"/>
+                  <text class="dg__num" x="448" y="93">3</text>
+                  <text class="dg__label" x="462" y="93">Email</text>
+                  <text class="dg__meta" x="448" y="110">+ .xlsx</text>
+                </g>
+                <g class="dg" data-dg="cas6">
+                  <rect class="dg__box" x="436" y="160" width="76" height="52" rx="10"/>
+                  <text class="dg__num" x="448" y="183">6</text>
+                  <text class="dg__label" x="462" y="183">Form.</text>
+                  <text class="dg__meta" x="448" y="200">urgence</text>
+                </g>
+              </svg>
+              <p class="story__caption mono" data-story-caption>Cas 1 · Détection</p>
+            </div>
+          </div>
+
+          <ol class="story__steps">
+            <li class="story-step" data-step="cas1">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">1</span>Détection des ruptures</p>
+              <h3 class="h3">Le stock est lu, les ruptures repérées.</h3>
+              <p>Chaque cycle lit l'inventaire Excel et compare, produit par produit, la quantité à son seuil minimum. Tout produit à son seuil ou en dessous est marqué <strong>RUPTURE</strong>.</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sheet"/></svg><span class="mono">rapport_alerte_2026-10-12_08-00.xlsx</span></p>
+              <p class="story-step__tags"><span class="tag">pandas</span><span class="tag">openpyxl</span></p>
+            </li>
+            <li class="story-step" data-step="cas3">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">3</span>Alerte email</p>
+              <h3 class="h3">Dès la première rupture, l'alerte part.</h3>
+              <p>Un email HTML liste les produits concernés, quantité et seuil, avec le rapport Excel en pièce jointe. Il passe par Gmail, en connexion chiffrée.</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-mail"/></svg><span class="mono">[ALERTE STOCK] 12 produit(s) en rupture</span></p>
+              <p class="story-step__tags"><span class="tag">smtplib</span><span class="tag">MIME</span></p>
+            </li>
+            <li class="story-step" data-step="cas6">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">6</span>Formulaire d'urgence</p>
+              <h3 class="h3">Au-delà du seuil critique, le formulaire se remplit seul.</h3>
+              <p>Quand le nombre de ruptures atteint le seuil réglé (3 par défaut), un navigateur sans interface remplit le formulaire de commande urgente, champ par champ, puis le soumet.</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-form"/></svg><span class="mono">Form submitted · Received!</span></p>
+              <p class="story-step__tags"><span class="tag">Selenium</span><span class="tag">Chrome headless</span></p>
+            </li>
+            <li class="story-step" data-step="cas2">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">2</span>Rapport hebdomadaire</p>
+              <h3 class="h3">La semaine de production, compilée.</h3>
+              <p>Les cinq fichiers CSV journaliers sont fusionnés en un classeur à deux onglets&nbsp;: le détail jour par jour et le total de la semaine par produit.</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sheet"/></svg><span class="mono">rapport_semaine_2026-10-16_08-00.xlsx</span></p>
+              <p class="story-step__tags"><span class="tag">pandas</span><span class="tag">ExcelWriter</span></p>
+            </li>
+            <li class="story-step" data-step="cas5">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">5</span>Scraping des prix</p>
+              <h3 class="h3">Les prix du marché, relevés en ligne.</h3>
+              <p>Le catalogue d'un site e-commerce est parcouru&nbsp;: nom, prix, description et note de chaque produit, exportés dans un fichier Excel horodaté.</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-globe"/></svg><span class="mono">scraping_produits_2026-10-12_12-00.xlsx</span></p>
+              <p class="story-step__tags"><span class="tag">Selenium</span><span class="tag">WebDriverWait</span></p>
+            </li>
+            <li class="story-step" data-step="cas4">
+              <p class="story-step__eyebrow mono"><span class="story-step__num">4</span>Planification</p>
+              <h3 class="h3">Le tout tourne en boucle, sans vous.</h3>
+              <p>Le planificateur relance chaque tâche à son rythme&nbsp;: en minutes pour tout valider (TEST), en heures et chaque vendredi pour l'usage réel (PRODUCTION).</p>
+              <p class="story-step__out"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-clock"/></svg><span class="mono">every(60).minutes · friday.at("08:00")</span></p>
+              <p class="story-step__tags"><span class="tag">schedule</span></p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Comment ça marche ============ -->
+    <section class="section section--alt" id="etapes" aria-labelledby="etapes-titre">
+      <div class="container how">
+        <div class="how__copy">
+          <div class="section__head">
+            <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">03</span>Mise en route</p>
+            <h2 class="h2" id="etapes-titre" data-reveal="fade-up" style="--reveal-index:1">Deux questions, puis plus rien.</h2>
+          </div>
+          <ol class="how__steps">
+            <li class="how-step" data-reveal="fade-up" style="--reveal-index:0">
+              <span class="how-step__num mono">01</span>
+              <div><h3 class="h3">Choisissez l'inventaire</h3><p class="muted">Un fichier Excel à trois colonnes&nbsp;: produit, quantité, seuil minimum. Trois exemples sont fournis.</p></div>
+            </li>
+            <li class="how-step" data-reveal="fade-up" style="--reveal-index:1">
+              <span class="how-step__num mono">02</span>
+              <div><h3 class="h3">Choisissez le mode</h3><p class="muted">TEST pour voir tout tourner en quelques minutes, PRODUCTION pour une surveillance réelle.</p></div>
+            </li>
+            <li class="how-step" data-reveal="fade-up" style="--reveal-index:2">
+              <span class="how-step__num mono">03</span>
+              <div><h3 class="h3">Laissez tourner</h3><p class="muted">Alertes, rapports et relevés de prix arrivent d'eux-mêmes, jusqu'à l'arrêt du programme.</p></div>
+            </li>
+          </ol>
+        </div>
+
+        <figure class="terminal console" data-reveal="scale-in" style="--reveal-index:1">
+          <div class="console__bar">
+            <span class="console__lights" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span class="console__title">terminal · en local</span>
+            <button class="btn btn--sm terminal__copy" type="button" data-action="copy" data-copy="python main.py" aria-label="Copier la commande python main.py">
+              <span class="btn__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-copy"/></svg>Copier</span>
+              <span class="btn__state btn__state--success"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg>Copié</span>
+            </button>
+          </div>
+<pre class="console__body terminal__body"><span class="t-prompt">$</span> python main.py
+
+  <span class="t-dim">Fichiers inventaire disponibles</span>
+  1. inventaire_consommables_bureau.xlsx
+  2. inventaire_gaming_multimedia.xlsx
+  3. inventaire_stockage_securite.xlsx
+  Sélectionnez un fichier (1-3) : <span class="t-in">2</span>
+
+  <span class="t-dim">Mode d'exécution</span>
+  1. TEST       — intervalles courts (minutes)
+  2. PRODUCTION — intervalles réels (heures/semaine)
+  Sélectionnez un mode (1 ou 2) : <span class="t-in">1</span>
+
+  <span class="t-ok">✓</span> Surveillance stock  : toutes les 1 minute(s)
+  <span class="t-ok">✓</span> Rapport production  : toutes les 2 minute(s)
+  <span class="t-ok">✓</span> Scraping produits   : toutes les 3 minute(s)</pre>
+          <figcaption class="terminal__caption">En local, ces deux questions suffisent. Ici, la démo fait la même chose dans votre navigateur.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ Fonctionnalités ============ -->
+    <section class="section" id="fonctionnalites" aria-labelledby="fonctionnalites-titre">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">04</span>Sous le capot</p>
+          <h2 class="h2" id="fonctionnalites-titre" data-reveal="fade-up" style="--reveal-index:1">Simple à lancer, solide à l'usage.</h2>
+        </div>
+        <ul class="features">
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:0">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-sheet"/></svg></span>
+            <h3 class="h3">Excel en entrée et en sortie</h3>
+            <p class="muted">Les inventaires sont lus tels quels&nbsp;; chaque rapport est horodaté et s'ouvre directement dans Excel.</p>
+            <p class="feature__tags"><span class="tag">pandas</span><span class="tag">openpyxl</span></p>
+          </li>
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:1">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg></span>
+            <h3 class="h3">Un seuil par produit</h3>
+            <p class="muted">Chaque produit a son minimum&nbsp;; un seuil global, lui, déclenche le formulaire d'urgence.</p>
+            <p class="feature__tags"><span class="tag">Seuil_Minimum</span></p>
+          </li>
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:2">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg></span>
+            <h3 class="h3">Deux modes, un seul code</h3>
+            <p class="muted">TEST en minutes, PRODUCTION en heures et à jour fixe, sans modifier une ligne.</p>
+            <p class="feature__tags"><span class="tag">schedule</span></p>
+          </li>
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:3">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-key"/></svg></span>
+            <h3 class="h3">Configuration centralisée</h3>
+            <p class="muted">Adresses, intervalles, URL et seuils dans un seul fichier. Une variable manquante est signalée clairement.</p>
+            <p class="feature__tags"><span class="tag">.env</span><span class="tag">python-dotenv</span></p>
+          </li>
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:4">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-cursor"/></svg></span>
+            <h3 class="h3">Un navigateur automatisé</h3>
+            <p class="muted">Chrome, sans interface, lit un catalogue en ligne et remplit un formulaire comme le ferait une personne.</p>
+            <p class="feature__tags"><span class="tag">Selenium</span></p>
+          </li>
+          <li class="card card--interactive feature" data-reveal="fade-up" style="--reveal-index:5">
+            <span class="card__icon"><svg class="icon" aria-hidden="true"><use href="#i-puzzle"/></svg></span>
+            <h3 class="h3">Chaque cas, autonome</h3>
+            <p class="muted">Les six scripts se lancent aussi un par un, pour tester un cas isolé sans tout le pipeline.</p>
+            <p class="feature__tags"><span class="tag">scripts/cas*.py</span></p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ Démo interactive ============ -->
+    <section class="section section--alt demo-section" id="demo" aria-labelledby="demo-titre">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">05</span>Démo interactive</p>
+          <h2 class="h2" id="demo-titre" tabindex="-1" data-reveal="fade-up" style="--reveal-index:1">Réglez, modifiez un stock, lancez.</h2>
+          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Choisissez un inventaire ou importez le vôtre, changez une quantité&nbsp;: le panneau de droite montre en direct ce que le pipeline va faire.</p>
+        </div>
+
+        <form class="demo" id="demo-form" novalidate data-reveal="fade-up" style="--reveal-index:2">
+          <div class="demo__config">
+            <!-- 01 Inventaire -->
+            <fieldset class="demo-block">
+              <legend class="demo-block__legend"><span class="mono demo-block__num">01</span>Inventaire</legend>
+              <div class="inv-choices" role="radiogroup" aria-label="Inventaire à surveiller" data-inventory-choices>
+                <!-- Rempli par demo.js ; squelettes en attendant -->
+                <span class="inv-choice inv-choice--skeleton skeleton" aria-hidden="true"></span>
+                <span class="inv-choice inv-choice--skeleton skeleton" aria-hidden="true"></span>
+                <span class="inv-choice inv-choice--skeleton skeleton" aria-hidden="true"></span>
+                <span class="inv-choice inv-choice--skeleton skeleton" aria-hidden="true"></span>
+              </div>
+              <p class="field__error" data-error="inventaires" hidden></p>
+
+              <!-- Import -->
+              <div class="import" data-import hidden>
+                <div class="import__grid">
+                  <div class="field">
+                    <span class="field__label" id="import-inv-label">Fichier d'inventaire</span>
+                    <label class="dropzone" data-dropzone="inventaire">
+                      <input class="dropzone__input" type="file" name="inventaire" accept=".xlsx,.csv" aria-labelledby="import-inv-label" aria-describedby="import-inv-hint import-inv-msg">
+                      <span class="dropzone__icon"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg></span>
+                      <span class="dropzone__title" data-dropzone-title>Déposez votre fichier ou parcourez</span>
+                      <span class="dropzone__hint" id="import-inv-hint">.xlsx ou .csv · colonnes Produit, Quantite, Seuil_Minimum · 2 Mo max.</span>
+                    </label>
+                    <div id="import-inv-msg" aria-live="polite" data-import-message></div>
+                  </div>
+                  <div class="field">
+                    <span class="field__label" id="import-prod-label">Production de la semaine <span class="muted xs">(facultatif)</span></span>
+                    <label class="dropzone dropzone--compact" data-dropzone="production">
+                      <input class="dropzone__input" type="file" name="production" accept=".csv" multiple aria-labelledby="import-prod-label" aria-describedby="import-prod-hint">
+                      <span class="dropzone__icon"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg></span>
+                      <span class="dropzone__title" data-dropzone-title>Lundi.csv … Vendredi.csv</span>
+                      <span class="dropzone__hint" id="import-prod-hint">Pour le rapport hebdomadaire · un CSV par jour.</span>
+                    </label>
+                  </div>
+                </div>
+                <p class="import__help">
+                  <button class="link xs" type="button" data-open-dialog="dialog-format">Format attendu</button>
+                  <span class="muted xs" aria-hidden="true">·</span>
+                  <a class="link xs" href="exemples/inventaire_consommables_bureau.xlsx" download>Inventaire d'exemple (.xlsx)</a>
+                  <span class="muted xs" aria-hidden="true">·</span>
+                  <a class="link xs" href="exemples/production_consommables_bureau.zip" download>Production d'exemple (.zip)</a>
+                </p>
+              </div>
+
+              <!-- Tableau modifiable -->
+              <div class="inv-table" data-inventory-table>
+                <div class="inv-table__toolbar">
+                  <p class="inv-table__count" aria-live="polite" data-inventory-count>Chargement de l'inventaire…</p>
+                  <div class="inv-table__tools">
+                    <label class="mini-check">
+                      <input type="checkbox" data-filter-ruptures>
+                      <span class="mini-check__box" aria-hidden="true"><svg class="icon"><use href="#i-check"/></svg></span>
+                      Ruptures seulement
+                    </label>
+                    <button class="btn btn--ghost btn--sm" type="button" data-action="reset-inventory" disabled>
+                      <svg class="icon icon--sm" aria-hidden="true"><use href="#i-refresh"/></svg>Réinitialiser
+                    </button>
+                  </div>
+                </div>
+                <div class="table-wrap inv-table__wrap">
+                  <table class="table">
+                    <caption class="visually-hidden">Produits de l'inventaire : la quantité est modifiable, le statut se met à jour en direct.</caption>
+                    <thead>
+                      <tr><th scope="col">Produit</th><th scope="col" class="col-center">Quantité</th><th scope="col" class="col-num inv-table__seuil-col">Seuil</th><th scope="col">Statut</th></tr>
+                    </thead>
+                    <tbody data-inventory-body>
+                      <tr><td colspan="4"><span class="skeleton skeleton-line" aria-hidden="true"></span></td></tr>
+                      <tr><td colspan="4"><span class="skeleton skeleton-line" aria-hidden="true"></span></td></tr>
+                      <tr><td colspan="4"><span class="skeleton skeleton-line" aria-hidden="true"></span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="field__error" data-error="lignes" hidden></p>
+              </div>
+            </fieldset>
+
+            <!-- 02 Paramètres -->
+            <fieldset class="demo-block">
+              <legend class="demo-block__legend"><span class="mono demo-block__num">02</span>Paramètres</legend>
+              <div class="params">
+                <div class="field">
+                  <span class="field__label" id="mode-label">Mode d'exécution</span>
+                  <div class="segmented" role="radiogroup" aria-labelledby="mode-label">
+                    <label class="segmented__option">
+                      <input class="segmented__input" type="radio" name="mode" value="TEST" checked>
+                      <span class="segmented__label"><span class="segmented__title">TEST</span><span class="segmented__desc">minutes</span></span>
+                    </label>
+                    <label class="segmented__option">
+                      <input class="segmented__input" type="radio" name="mode" value="PROD">
+                      <span class="segmented__label"><span class="segmented__title">PRODUCTION</span><span class="segmented__desc">heures · hebdo</span></span>
+                    </label>
+                  </div>
+                  <p class="field__hint">Le mode ne change que le rythme&nbsp;: voyez-le dans l'onglet Planification du résultat.</p>
+                </div>
+
+                <div class="field">
+                  <span class="field__label" id="seuil-label">Seuil du formulaire d'urgence</span>
+                  <div class="seuil">
+                    <div class="stepper stepper--lg" data-stepper>
+                      <button class="stepper__btn" type="button" data-step="-1" aria-label="Diminuer le seuil"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-minus"/></svg></button>
+                      <input class="stepper__input" type="number" name="seuil_formulaire" value="3" min="1" max="50" inputmode="numeric" aria-labelledby="seuil-label" aria-describedby="seuil-hint">
+                      <button class="stepper__btn" type="button" data-step="1" aria-label="Augmenter le seuil"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-plus"/></svg></button>
+                    </div>
+                    <p class="field__hint" id="seuil-hint">ruptures ou plus déclenchent le formulaire (1 à 50).</p>
+                  </div>
+                  <p class="field__error" data-error="seuil_formulaire" hidden></p>
+                </div>
+
+                <div class="params__switches">
+                  <label class="switch">
+                    <input class="switch__input" type="checkbox" name="rapport" checked>
+                    <span class="switch__track" aria-hidden="true"><span class="switch__thumb"><svg class="icon"><use href="#i-check"/></svg></span></span>
+                    <span class="switch__text"><span class="switch__title">Rapport hebdomadaire</span><span class="switch__desc">Cas 2 · fusion des CSV de production</span></span>
+                  </label>
+                  <label class="switch">
+                    <input class="switch__input" type="checkbox" name="scraping" checked>
+                    <span class="switch__track" aria-hidden="true"><span class="switch__thumb"><svg class="icon"><use href="#i-check"/></svg></span></span>
+                    <span class="switch__text"><span class="switch__title">Scraping des prix</span><span class="switch__desc">Cas 5 · <span data-scraping-category>catalogue en ligne</span></span></span>
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- Prévision en direct + lancement -->
+          <aside class="demo__forecast" aria-labelledby="prevision-titre">
+            <div class="forecast corners">
+              <p class="eyebrow"><span class="eyebrow__index">03</span>Prévision</p>
+              <h3 class="h3 forecast__title" id="prevision-titre">Ce que le pipeline va faire</h3>
+              <div class="forecast__figure">
+                <span class="forecast__value" data-forecast-ruptures>—</span>
+                <span class="forecast__unit">rupture(s)<br><span class="muted" data-forecast-total>sur — produits</span></span>
+              </div>
+              <ul class="forecast__list" data-forecast-list aria-live="polite">
+                <li data-forecast="cas1"></li>
+                <li data-forecast="cas3"></li>
+                <li data-forecast="cas6"></li>
+                <li data-forecast="cas2"></li>
+                <li data-forecast="cas5"></li>
+                <li data-forecast="cas4"></li>
+              </ul>
+              <button class="btn btn--primary btn--lg btn--block" type="submit" data-launch disabled>
+                <span class="btn__label">Lancer le pipeline<svg class="icon btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+                <span class="btn__state btn__state--loading"><span class="spinner" aria-hidden="true"></span>Lancement…</span>
+              </button>
+              <p class="forecast__note xs muted">Rien n'est conservé&nbsp;: les fichiers restent téléchargeables une heure.</p>
+            </div>
+          </aside>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ Scénarios d'usage ============ -->
+    <section class="section" id="scenarios" aria-labelledby="scenarios-titre">
+      <div class="container">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">06</span>Scénarios d'usage</p>
+          <h2 class="h2" id="scenarios-titre" data-reveal="fade-up" style="--reveal-index:1">Pour celles et ceux qui ont mieux à faire.</h2>
+          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Trois situations types, imaginées pour illustrer le projet.</p>
+        </div>
+        <ul class="scenarios">
+          <li class="card scenario" data-reveal="fade-up" style="--reveal-index:0">
+            <p class="scenario__role mono">Responsable logistique</p>
+            <blockquote class="scenario__quote">«&nbsp;Je surveille quatre entrepôts. Avant, j'ouvrais chaque fichier Excel le matin.&nbsp;»</blockquote>
+            <p class="scenario__who"><span class="scenario__avatar" aria-hidden="true">M</span>Marie</p>
+            <p class="scenario__how"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg>Mode PRODUCTION&nbsp;: contrôle chaque heure, alerte dès la première rupture, rapport le vendredi à 8&nbsp;h.</p>
+          </li>
+          <li class="card scenario" data-reveal="fade-up" style="--reveal-index:1">
+            <p class="scenario__role mono">Acheteur</p>
+            <blockquote class="scenario__quote">«&nbsp;Je compare nos prix à ceux des concurrents chaque semaine.&nbsp;»</blockquote>
+            <p class="scenario__who"><span class="scenario__avatar" aria-hidden="true">T</span>Thomas</p>
+            <p class="scenario__how"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg>Le catalogue concurrent est relevé toutes les 4&nbsp;h et exporté en Excel, prêt à comparer.</p>
+          </li>
+          <li class="card scenario" data-reveal="fade-up" style="--reveal-index:2">
+            <p class="scenario__role mono">Assistante administrative</p>
+            <blockquote class="scenario__quote">«&nbsp;Quand les fournitures manquent, je dois remplir un bon de commande urgent.&nbsp;»</blockquote>
+            <p class="scenario__who"><span class="scenario__avatar" aria-hidden="true">L</span>Léa</p>
+            <p class="scenario__how"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-check"/></svg>Au-delà de 3 ruptures, le formulaire est rempli et soumis tout seul.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section section--alt" id="faq" aria-labelledby="faq-titre">
+      <div class="container faq">
+        <div class="section__head">
+          <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">07</span>Questions fréquentes</p>
+          <h2 class="h2" id="faq-titre" data-reveal="fade-up" style="--reveal-index:1">Les réponses, sans détour.</h2>
+        </div>
+        <div class="accordion" data-reveal="fade-up" style="--reveal-index:2">
+          <details class="accordion__item">
+            <summary class="accordion__summary">L'email d'alerte est-il vraiment envoyé&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>En local, oui&nbsp;: par Gmail, avec un mot de passe d'application. Dans cette démo publique, l'email est construit à l'identique (même contenu, même pièce jointe) mais il n'est pas envoyé&nbsp;: vous le téléchargez en .eml et l'ouvrez dans votre messagerie.</p>
+            </div>
+          </details>
+          <details class="accordion__item">
+            <summary class="accordion__summary">Le scraping et le formulaire se font-ils pour de vrai&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>Oui, sur deux sites de test publics prévus pour cet usage (webscraper.io et selenium.dev). En local, Selenium pilote Chrome. L'hébergement gratuit de la démo n'a pas de navigateur&nbsp;: les mêmes pages y sont lues et le formulaire y est soumis par de simples requêtes HTTP.</p>
+              <p>Si le site de scraping ne répond pas, une copie récente du catalogue est utilisée, et c'est indiqué dans le résultat.</p>
+            </div>
+          </details>
+          <details class="accordion__item">
+            <summary class="accordion__summary">Quel format pour mon propre inventaire&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>Un fichier .xlsx ou .csv avec trois colonnes&nbsp;: Produit, Quantite et Seuil_Minimum (accents et majuscules tolérés), jusqu'à 300 produits. Ajoutez si vous le souhaitez les CSV de production de la semaine, un par jour (Lundi.csv, Mardi.csv…), avec les colonnes Produit, Quantite_Produite et Ligne_Production.</p>
+            </div>
+          </details>
+          <details class="accordion__item">
+            <summary class="accordion__summary">Mes fichiers sont-ils conservés&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>Rien n'est écrit sur le disque du serveur. Les fichiers générés restent en mémoire une heure, le temps de les télécharger, puis sont effacés.</p>
+            </div>
+          </details>
+          <details class="accordion__item">
+            <summary class="accordion__summary">Quelle différence entre TEST et PRODUCTION&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>Le mode change le rythme, pas le travail. En TEST&nbsp;: surveillance chaque minute, rapport toutes les 2 minutes, scraping toutes les 3 minutes. En PRODUCTION&nbsp;: surveillance chaque heure, scraping toutes les 4 heures, rapport chaque vendredi à 8&nbsp;h. L'onglet Planification du résultat montre les deux calendriers.</p>
+            </div>
+          </details>
+          <details class="accordion__item">
+            <summary class="accordion__summary">Comment l'utiliser chez moi&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
+            <div class="accordion__content">
+              <p>Avec Python 3.11 ou plus récent&nbsp;: installez les dépendances (requirements.txt), copiez .env.example en .env, puis lancez <code class="mono">python main.py</code>. Google Chrome est nécessaire pour le scraping et le formulaire.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Appel final ============ -->
+    <section class="final" aria-labelledby="final-titre">
+      <div class="grid-bg" aria-hidden="true"></div>
+      <div class="container final__inner">
+        <h2 class="h2 final__title" id="final-titre" data-reveal="fade-up">Laissez le pipeline <span class="hl hl--static">prendre le relais.</span></h2>
+        <p class="lead final__lead" data-reveal="fade-up" style="--reveal-index:1">Un clic&nbsp;: les six automatisations s'enchaînent sur un inventaire réel, et vous repartez avec les fichiers.</p>
+        <div class="final__actions" data-reveal="fade-up" style="--reveal-index:2">
+          <button class="btn btn--primary btn--lg" type="button" data-action="run-default" data-magnetic>
+            <span class="btn__label">Lancer le pipeline<svg class="icon btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
+          </button>
+          <a class="btn btn--secondary btn--lg" href="#demo"><span class="btn__label">Configurer la démo</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================================================================
+       VUE EXÉCUTION
+       ================================================================== -->
+  <main class="view" id="vue-execution" hidden>
+    <section class="run container" aria-labelledby="run-titre">
+      <a class="link-arrow link-arrow--back run__back" href="#demo" data-nav="demo">
+        <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-left"/></svg>Modifier les réglages
+      </a>
+
+      <header class="run__head">
+        <div class="run__heading">
+          <p class="eyebrow"><span class="eyebrow__index">›</span>Exécution du pipeline</p>
+          <h1 class="h1" id="run-titre" tabindex="-1" data-run-title>Pipeline en cours…</h1>
+          <ul class="run__meta" data-run-meta></ul>
+        </div>
+        <div class="run__status">
+          <span class="status-pill" data-state="running" data-run-status><span class="status-pill__dot" aria-hidden="true"></span><span data-run-status-text>En cours</span></span>
+          <button class="btn btn--ghost btn--sm" type="button" data-action="skip-animation">Afficher tout de suite</button>
+        </div>
+      </header>
+
+      <div class="progress" data-run-progress role="progressbar" aria-label="Avancement du pipeline" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><div class="progress__bar"></div></div>
+
+      <div class="run__grid">
+        <ol class="steps" data-run-steps aria-label="Étapes du pipeline"></ol>
+        <div class="console run__console">
+          <div class="console__bar">
+            <span class="console__lights" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span class="console__title" data-run-console-title>journal</span>
+          </div>
+          <div class="console__body run__log" role="log" aria-live="off" aria-label="Journal d'exécution" tabindex="0" data-run-log></div>
+        </div>
+      </div>
+
+      <div class="run__error card" data-run-error hidden role="alert">
+        <span class="run__error-icon"><svg class="icon icon--lg" aria-hidden="true"><use href="#i-alert"/></svg></span>
+        <div>
+          <h2 class="h3">Le pipeline n'a pas pu aller au bout</h2>
+          <p class="muted" data-run-error-message></p>
+        </div>
+        <button class="btn btn--primary" type="button" data-action="retry"><span class="btn__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-refresh"/></svg>Réessayer</span></button>
+      </div>
+
+      <section class="results" data-results aria-labelledby="resultats-titre" hidden>
+        <div class="results__head">
+          <h2 class="h2 results__title" id="resultats-titre" tabindex="-1">Résultats</h2>
+          <div class="results__actions">
+            <a class="btn btn--primary" href="#" data-archive download>
+              <span class="btn__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-download"/></svg>Tout télécharger (.zip)</span>
+            </a>
+            <button class="btn btn--secondary" type="button" data-action="rerun">
+              <span class="btn__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-refresh"/></svg>Relancer</span>
+              <span class="btn__state btn__state--loading"><span class="spinner" aria-hidden="true"></span>Relance…</span>
+            </button>
+          </div>
+        </div>
+
+        <dl class="stats" data-stats></dl>
+
+        <div class="results__layout">
+          <div class="results__main">
+            <div class="tabs" role="tablist" aria-label="Résultats par automatisation" data-results-tabs></div>
+            <div data-results-panels></div>
+          </div>
+          <aside class="files card" aria-labelledby="fichiers-titre">
+            <h3 class="h3" id="fichiers-titre">Fichiers générés</h3>
+            <p class="xs muted">Les mêmes fichiers que la ligne de commande. Disponibles une heure.</p>
+            <ul class="files__list" data-files></ul>
+          </aside>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ============ Pied de page ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__grid">
+        <div class="site-footer__about">
+          <a class="brand" href="./" data-nav="accueil">
+            <span class="brand__slot" data-logo></span>
+            <span class="brand__name">Relais</span>
+          </a>
+          <p>Automatisation de processus en Python&nbsp;: stock, alertes, rapports, prix et formulaires, enchaînés en un pipeline. Conçu et développé par Dibie Elisee Jules Cedric KOUADIO.</p>
+        </div>
+        <div>
+          <h2 class="site-footer__title mono">Explorer</h2>
+          <ul class="site-footer__links">
+            <li><a href="#fonctionnement">Fonctionnement</a></li>
+            <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+            <li><a href="#demo">Démo interactive</a></li>
+            <li><a href="#faq">Questions fréquentes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="site-footer__title mono">Fichiers d'exemple</h2>
+          <ul class="site-footer__links">
+            <li><a href="exemples/inventaire_gaming_multimedia.xlsx" download>Inventaire gaming (.xlsx)</a></li>
+            <li><a href="exemples/inventaire_consommables_bureau.xlsx" download>Inventaire bureau (.xlsx)</a></li>
+            <li><a href="exemples/inventaire_stockage_securite.xlsx" download>Inventaire stockage (.xlsx)</a></li>
+            <li><a href="exemples/production_gaming_multimedia.zip" download>Production de la semaine (.zip)</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="site-footer__bottom">
+        <p>© 2026 · Données de démonstration fictives.</p>
+        <p>Sites automatisés&nbsp;: boutique de test webscraper.io et formulaire de test selenium.dev.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ Fenêtre : format attendu ============ -->
+  <dialog class="dialog" id="dialog-format" aria-labelledby="dialog-format-titre">
+    <div class="dialog__head">
+      <h2 class="h3" id="dialog-format-titre">Format attendu</h2>
+      <button class="btn btn--ghost btn--icon btn--sm" type="button" data-close-dialog aria-label="Fermer"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dialog__body">
+      <p><strong>Inventaire</strong> (.xlsx ou .csv), une ligne par produit, jusqu'à 300 produits&nbsp;:</p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th scope="col">Produit</th><th scope="col" class="col-num">Quantite</th><th scope="col" class="col-num">Seuil_Minimum</th></tr></thead>
+          <tbody>
+            <tr><td>Hub USB 3.0 7 Ports</td><td class="num">5</td><td class="num">8</td></tr>
+            <tr><td>Cable HDMI 2.1 3m</td><td class="num">35</td><td class="num">20</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Production</strong> (facultatif)&nbsp;: un .csv par jour, nommé d'après le jour (Lundi.csv…), avec les colonnes Produit, Quantite_Produite et Ligne_Production.</p>
+      <p class="xs muted">Règle de détection&nbsp;: un produit est en rupture quand Quantite ≤ Seuil_Minimum.</p>
+    </div>
+    <div class="dialog__foot">
+      <button class="btn btn--primary" type="button" data-close-dialog><span class="btn__label">Compris</span></button>
+    </div>
+  </dialog>
+
+  <div class="toasts" aria-live="polite" aria-atomic="false" data-toasts></div>
+  <div class="visually-hidden" aria-live="polite" data-announcer></div>
+</body>
+</html>

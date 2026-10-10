@@ -14,6 +14,13 @@ from datetime import datetime
 import config
 
 
+def detecter_ruptures(df: pd.DataFrame) -> pd.DataFrame:
+    """Produits dont la quantité est inférieure ou égale au seuil, marqués RUPTURE."""
+    alertes = df[df["Quantite"] <= df["Seuil_Minimum"]].copy()
+    alertes["Statut"] = "RUPTURE"
+    return alertes
+
+
 def run(inventaire_path: Path, output_dir: Path) -> int:
     """
     Lit le fichier inventaire, détecte les ruptures et génère un rapport.
@@ -28,8 +35,7 @@ def run(inventaire_path: Path, output_dir: Path) -> int:
     print(f"\nLecture : {inventaire_path.name}")
     df = pd.read_excel(inventaire_path)
 
-    alertes = df[df["Quantite"] <= df["Seuil_Minimum"]].copy()
-    alertes["Statut"] = "RUPTURE"
+    alertes = detecter_ruptures(df)
 
     print(f"\n--- PRODUITS EN ALERTE  {len(alertes)}/{len(df)} ---")
     if alertes.empty:

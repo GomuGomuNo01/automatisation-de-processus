@@ -14,29 +14,23 @@ from typing import cast
 from datetime import datetime
 import config
 
+JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
-def run(production_dir: Path, output_dir: Path) -> None:
+
+def ordre_jour(nom: str) -> tuple[int, str]:
+    """Clé de tri : les jours dans l'ordre de la semaine, les autres noms ensuite."""
+    jour = nom.capitalize()
+    return (JOURS.index(jour) if jour in JOURS else len(JOURS), jour)
+
+
+def fusionner(journees: list[tuple[str, pd.DataFrame]]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Fusionne tous les CSV du dossier production_dir en un rapport Excel.
+    Fusionne les productions journalières (jour, DataFrame).
 
-    Args:
-        production_dir : dossier contenant les CSV journaliers
-        output_dir     : dossier de sortie pour le rapport généré
+    Returns:
+        (détail journalier avec colonne Jour, récapitulatif par produit)
     """
-    fichiers = sorted(production_dir.glob("*.csv"))
-    if not fichiers:
-        print(f"\nAucun fichier CSV trouvé dans : {production_dir}")
-        return
-
-    print(f"\n{len(fichiers)} fichier(s) trouvé(s) dans '{production_dir.name}/'")
-
-    frames: list[pd.DataFrame] = []
-    for f in fichiers:
-        df = cast(pd.DataFrame, pd.read_csv(f))  # type: ignore[call-overload]
-        df["Jour"] = f.stem.capitalize()
-        frames.append(df)
-        print(f"  Chargé : {f.name}  ({len(df)} lignes)")
-
+    frames = [df.assign(Jour=jour.capitalize()) for jour, df in sorted(journees, key=lambda j: ordre_jour(j[0]))]
     df_final = pd.concat(frames, ignore_index=True)
     df_final = df_final[["Jour", "Produit", "Quantite_Produite", "Ligne_Production"]]
 
@@ -47,6 +41,31 @@ def run(production_dir: Path, output_dir: Path) -> None:
         .rename(columns={"Quantite_Produite": "Total_Semaine"})
         .sort_values("Total_Semaine", ascending=False)
     )
+    return df_final, recap
+
+
+def run(production_dir: Path, output_dir: Path) -> None:
+    """
+    Fusionne tous les CSV du dossier production_dir en un rapport Excel.
+
+    Args:
+        production_dir : dossier contenant les CSV journaliers
+        output_dir     : dossier de sortie pour le rapport généré
+    """
+    fichiers = sorted(production_dir.glob("*.csv"), key=lambda f: ordre_jour(f.stem))
+    if not fichiers:
+        print(f"\nAucun fichier CSV trouvé dans : {production_dir}")
+        return
+
+    print(f"\n{len(fichiers)} fichier(s) trouvé(s) dans '{production_dir.name}/'")
+
+    journees: list[tuple[str, pd.DataFrame]] = []
+    for f in fichiers:
+        df = cast(pd.DataFrame, pd.read_csv(f))  # type: ignore[call-overload]
+        journees.append((f.stem, df))
+        print(f"  Chargé : {f.name}  ({len(df)} lignes)")
+
+    df_final, recap = fusionner(journees)
 
     print("\n--- RÉCAPITULATIF PAR PRODUIT ---")
     print(recap.to_string(index=False))

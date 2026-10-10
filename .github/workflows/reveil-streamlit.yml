@@ -1,0 +1,46 @@
+# Empêche la démo de s'endormir sur Streamlit Community Cloud (veille après 12 h sans visite).
+# Un ping HTTP ne suffit pas : un vrai navigateur ouvre la page et lance le pipeline
+# (.github/scripts/reveil_streamlit.py). En cas d'échec, une capture est jointe à l'exécution.
+# Inactif tant que la variable de dépôt STREAMLIT_URL n'est pas définie :
+#   Settings > Secrets and variables > Actions > Variables > New repository variable
+#   STREAMLIT_URL = https://automatisation-de-processus-cedric.streamlit.app
+# À savoir : GitHub suspend les tâches planifiées après 60 jours sans activité sur le dépôt.
+name: Réveiller la démo Streamlit
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"  # toutes les 6 heures (minute décalée : moins d'attente chez GitHub)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visite:
+    if: ${{ vars.STREAMLIT_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer Playwright et Chromium
+        run: |
+          pip install playwright==1.63.0
+          playwright install --with-deps chromium
+
+      - name: Visiter la démo et lancer le pipeline
+        env:
+          STREAMLIT_URL: ${{ vars.STREAMLIT_URL }}
+        run: python .github/scripts/reveil_streamlit.py
+
+      - name: Joindre la capture en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capture-echec
+          path: reveil-echec.png
+          if-no-files-found: ignore

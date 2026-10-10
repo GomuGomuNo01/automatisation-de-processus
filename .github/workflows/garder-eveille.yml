@@ -1,0 +1,24 @@
+# Garde la démo éveillée sur un hébergement gratuit qui se met en veille (Render : après 15 min).
+# Inactif tant que la variable de dépôt DEMO_URL n'est pas définie :
+#   Settings > Secrets and variables > Actions > Variables > New repository variable
+#   DEMO_URL = https://automatisation-de-processus.onrender.com
+# Inutile sur Streamlit Community Cloud (voir reveil-streamlit.yml) et sur Cloud Run.
+name: Garder la démo éveillée
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    if: ${{ vars.DEMO_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Interroger la démo
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        run: curl --fail --silent --show-error --max-time 120 --retry 2 "${DEMO_URL%/}/_stcore/health"

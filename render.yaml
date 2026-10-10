@@ -1,0 +1,18 @@
+# Blueprint Render : déploiement gratuit, sans carte bancaire (voir docs/DEPLOIEMENT.md)
+# Render construit l'image à partir du Dockerfile et redéploie à chaque push sur la branche indiquée.
+services:
+  - type: web
+    name: automatisation-de-processus    # URL : https://automatisation-de-processus.onrender.com (si le nom est libre)
+    runtime: docker
+    plan: free                           # 512 Mo, 0,1 CPU, mise en veille après 15 min sans visite
+    region: frankfurt                    # le plus proche de la France
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /_stcore/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: MALLOC_ARENA_MAX            # limite la fragmentation mémoire (threads) sur 512 Mo
+        value: "2"
