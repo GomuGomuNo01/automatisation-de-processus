@@ -84,7 +84,9 @@ def identifiant_visiteur(request: Request) -> str:
     return request.client.host if request.client else "inconnu"
 
 
-def _reponse_erreurs(erreurs: dict, statut: int = 422) -> JSONResponse:
+# 400 et non 422 : le proxy de Streamlit Community Cloud remplace les réponses 422
+# par une page « Internal server error. », et le visiteur perdrait le message.
+def _reponse_erreurs(erreurs: dict, statut: int = 400) -> JSONResponse:
     return JSONResponse({"erreurs": erreurs}, status_code=statut)
 
 

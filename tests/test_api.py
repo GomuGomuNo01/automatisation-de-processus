@@ -113,18 +113,18 @@ class TestImport:
 
     def test_sans_fichier(self, client):
         r = client.post("/api/import", data={"x": "1"})
-        assert r.status_code == 422
+        assert r.status_code == 400
         assert "fichier" in r.json()["erreurs"]
 
     def test_fichier_invalide(self, client):
         r = client.post("/api/import", files={"inventaire": ("stock.csv", b"a,b\n1,2\n", "text/csv")})
-        assert r.status_code == 422
+        assert r.status_code == 400
         assert "manquante" in r.json()["erreurs"]["fichier"]
 
     def test_trop_volumineux(self, client):
         gros = b"x" * (api.TAILLE_MAX_IMPORT + 10)
         r = client.post("/api/import", files={"inventaire": ("stock.csv", gros, "text/csv")})
-        assert r.status_code == 422
+        assert r.status_code == 400
 
 
 class TestPipeline:
@@ -153,17 +153,17 @@ class TestPipeline:
 
     def test_requete_invalide(self, client):
         r = client.post("/api/pipeline", json={**REQUETE, "seuil_formulaire": 99})
-        assert r.status_code == 422
+        assert r.status_code == 400
         assert "seuil_formulaire" in r.json()["erreurs"]
 
     def test_json_illisible(self, client):
         r = client.post("/api/pipeline", content=b"{pas du json", headers={"Content-Type": "application/json"})
-        assert r.status_code == 422
+        assert r.status_code == 400
 
     def test_corps_trop_volumineux(self, client):
         r = client.post("/api/pipeline", content=b" " * (api.TAILLE_MAX_JSON + 1),
                         headers={"Content-Type": "application/json"})
-        assert r.status_code == 422
+        assert r.status_code == 400
 
     @pytest.mark.parametrize("chemin", [
         "/api/executions/123/fichiers/a.xlsx",
@@ -193,8 +193,8 @@ class TestEnvoiEmail:
         assert api.identifiant_visiteur(requete) == "203.0.113.7"
         assert api.identifiant_visiteur(Request({"type": "http", "headers": [], "client": ("10.0.0.3", 1)})) == "10.0.0.3"
 
-    def test_adresse_invalide_422(self, client):
+    def test_adresse_invalide_400(self, client):
         lignes = service.lire_inventaire("gaming_multimedia")["lignes"]
         r = client.post("/api/pipeline", json={**REQUETE, "lignes": lignes, "email": {"destinataire": "pas@"}})
-        assert r.status_code == 422
+        assert r.status_code == 400
         assert "destinataire" in r.json()["erreurs"]

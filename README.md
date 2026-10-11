@@ -327,7 +327,7 @@ L'interface est un frontend sur mesure, sans framework ni étape de build, servi
 |---|---|
 | [`tests/test_service.py`](tests/test_service.py) | Règle de rupture, fusion dans l'ordre de la semaine, échappement HTML de l'email, inventaires d'exemple, import (.xlsx, .csv à point-virgule, erreurs explicites), validation, planification TEST et PRODUCTION, pipeline complet et ses décisions, panne du formulaire, copie de secours du catalogue, cache ; envoi réel de l'email (adresses, injection d'en-tête, contenu verrouillé, « Répondre à », limites par visiteur et par adresse, panne SMTP) |
 | [`tests/test_navigateur.py`](tests/test_navigateur.py) | Extraction des produits comme Selenium, HTML mal fermé, valeurs envoyées par un vrai navigateur (champs désactivés, cases cochées, option sélectionnée), choix par texte visible |
-| [`tests/test_api.py`](tests/test_api.py) | Pages et fichiers statiques (cache, compression), inventaires, import, flux du pipeline (jamais compressé), téléchargements et archive, validations 422, exemples sur liste blanche, identifiants inconnus |
+| [`tests/test_api.py`](tests/test_api.py) | Pages et fichiers statiques (cache, compression), inventaires, import, flux du pipeline (jamais compressé), téléchargements et archive, validations 400 (le proxy de Streamlit Cloud masque les 422), exemples sur liste blanche, identifiants inconnus |
 
 Les deux sites de test sont simulés dans les tests : ils ne dépendent pas du réseau. L'envoi SMTP est remplacé pour tous les tests ([`tests/conftest.py`](tests/conftest.py)) : même avec de vrais identifiants dans le `.env`, aucun email ne part. L'interface a en plus été vérifiée dans un vrai navigateur (Chrome sans interface) : bureau et mobile, thèmes clair et sombre, clavier seul, mouvement réduit, import d'un fichier, puis en production sur Streamlit Community Cloud.
 
@@ -480,6 +480,7 @@ Sans fichier `.env` (cas de l'hébergement en ligne), `config.py` lit `.env.exam
 **Sur la mise en ligne**
 - **Une démo publique ne doit pas pouvoir nuire** : laisser n'importe quel visiteur déclencher un email pourrait en faire un relais de spam. L'envoi réel n'est donc possible qu'avec un contenu verrouillé et sous des limites de débit, depuis un compte dédié, et Gmail n'envoyant que depuis le compte authentifié, l'adresse d'expéditeur du visiteur devient un « Répondre à ».
 - **Le serveur n'est pas à l'heure du visiteur** : l'hébergeur tournant en UTC, « chaque vendredi à 08:00 » s'affichait 10:00 pour un visiteur en France. Fixer le fuseau a corrigé le calendrier ; il a fallu ensuite le limiter à Linux, car Windows interprète mal ce réglage.
+- **Un code HTTP peut être réécrit en route** : en production, le proxy de Streamlit Community Cloud remplaçait chaque réponse 422 (« données invalides ») par une page « Internal server error. », alors qu'en local tout fonctionnait. Les erreurs de validation passent donc en 400, et l'interface les reconnaît à leur contenu plutôt qu'à leur code.
 - **Une démo se vérifie là où elle tourne** : sur Streamlit Community Cloud, l'interface est servie dans une iframe sous `/~/+/` ; adresses relatives et message `GUEST_READY` sont indispensables, ce qu'aucun test local ne révèle.
 
 **Sur l'interface**

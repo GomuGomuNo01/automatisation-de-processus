@@ -217,7 +217,7 @@ export async function startRun(payload) {
     }
   } catch (e) {
     if (e.name === 'AbortError' || execution !== mien) return;
-    if (e instanceof ErreurApi && e.statut === 422) {
+    if (e instanceof ErreurApi && e.erreurs) {   // erreurs de validation, champ par champ
       rappels.onInvalid(e.erreurs);
       return;
     }

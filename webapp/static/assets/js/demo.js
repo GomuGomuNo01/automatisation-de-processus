@@ -553,7 +553,7 @@ export async function payloadPret() {
   return payload();
 }
 
-/** Erreurs renvoyées par le serveur (422) : affichées près des champs concernés */
+/** Erreurs de validation renvoyées par le serveur : affichées près des champs concernés */
 export function afficherErreursServeur(erreurs) {
   Object.entries(erreurs ?? {}).forEach(([champ, message]) => {
     const cible = { lignes: 'lignes', seuil_formulaire: 'seuil_formulaire', destinataire: 'destinataire', expediteur: 'expediteur' }[champ] ?? 'inventaires';
