@@ -13,7 +13,7 @@ Ce guide explique comment publier l'interface web pour que n'importe qui puisse 
 ## Ce dont l'application a besoin (partout)
 
 - **Python 3.11 ou plus récent** (pandas 3). Sur Streamlit Cloud, choisir **3.12** dans *Advanced settings*.
-- **Aucun secret** : sans fichier `.env`, `config.py` lit `.env.example`. L'interface web n'envoie jamais d'email (il se télécharge en `.eml`) ; rien à configurer.
+- **Secrets facultatifs** : sans fichier `.env`, `config.py` lit `.env.example` et la démo fonctionne entièrement ; l'email d'alerte se télécharge alors en `.eml`. Pour que les visiteurs le **reçoivent vraiment**, fournir les identifiants d'un compte Gmail dédié à la démo (voir ci-dessous).
 - **Accès Internet sortant** vers `webscraper.io` (Cas 5) et `selenium.dev` (Cas 6). Si le site de scraping est injoignable, une copie récente du catalogue (`webapp/donnees/scraping_secours.json`) prend le relais et l'interface le signale.
 - **Pas de Chrome** : en ligne, Cas 5 et 6 passent par des requêtes HTTP (`webapp/navigateur.py`) qui lisent les mêmes pages que Selenium.
 - **Une seule instance** : les fichiers générés restent en mémoire une heure. Avec plusieurs instances, un lien de téléchargement pourrait arriver sur une autre instance.
@@ -33,6 +33,20 @@ Ce guide explique comment publier l'interface web pour que n'importe qui puisse 
    ```bash
    sed -i 's#https://automatisation-de-processus-cedric.streamlit.app#https://VOTRE-ADRESSE#g' README.md
    ```
+
+**Envoi réel des emails (facultatif)** : dans la démo, le visiteur saisit `EMAIL_DESTINATAIRE` (et, s'il le veut, `EMAIL_EXPEDITEUR`) et reçoit l'alerte du Cas 3. L'envoi part d'un compte Gmail dédié à la démo :
+
+1. Créer un compte Gmail réservé à la démo (ne pas utiliser son compte personnel : son adresse apparaît en expéditeur), activer la validation en 2 étapes, puis générer un **mot de passe d'application**.
+2. Sur [share.streamlit.io](https://share.streamlit.io) : **⋮** sur la ligne de l'application > **Settings > Secrets**, puis coller :
+
+   ```toml
+   EMAIL_EXPEDITEUR = "compte.demo@gmail.com"
+   MOT_DE_PASSE_APP = "abcd efgh ijkl mnop"
+   ```
+
+3. **Save** : l'application redémarre. Le bloc « Recevoir l'alerte par email » de la démo devient actif.
+
+Garde-fous intégrés : envoi réservé aux inventaires d'exemple (seules les quantités changent, noms de produits vérifiés côté serveur), adresses validées, limites de 3 envois par heure et par visiteur, 2 par adresse et par jour, 50 par jour au total (Gmail plafonne vers 500). L'adresse d'expéditeur saisie par le visiteur est placée en « Répondre à », car Gmail n'envoie que depuis le compte authentifié. Sur Render, Cloud Run ou Docker, les mêmes valeurs se passent en variables d'environnement.
 
 **Après un push qui modifie une route du serveur** (`webapp/api.py` ou `app.py`) : redémarrer l'application (**Manage app** > **⋮** > **Reboot app**). Streamlit Cloud remplace les fichiers sans relancer le serveur : HTML, CSS et JS sont à jour tout de suite, mais les routes de l'API ne sont créées qu'au démarrage.
 

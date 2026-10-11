@@ -315,3 +315,123 @@ class TestCache:
             cache.ajouter(service.Execution(str(i) * 32, "x.zip"))
         assert cache.obtenir("0" * 32) is None
         assert cache.obtenir("2" * 32) is not None
+
+
+# ============================================================
+# ENVOI RÉEL DE L'EMAIL (EMAIL_DESTINATAIRE / EMAIL_EXPEDITEUR saisis sur la page)
+# ============================================================
+
+def lignes_exemple(cle="consommables_bureau"):
+    return [dict(l) for l in service.lire_inventaire(cle)["lignes"]]
+
+
+def requete_email(**email):
+    return requete(lignes=lignes_exemple(), email=email)
+
+
+@pytest.fixture
+def envoi_actif(monkeypatch):
+    monkeypatch.setattr(service, "envoi_email_actif", lambda: True)
+    monkeypatch.setattr(service.config, "EMAIL_EXPEDITEUR", "demo.relais@gmail.com")
+    monkeypatch.setattr(service.config, "MOT_DE_PASSE_APP", "abcd efgh ijkl mnop")
+
+
+def resultat_email(evenements) -> dict:
+    return next(e["donnees"] for e in evenements if e["type"] == "resultat" and e["cle"] == "cas3")
+
+
+class TestEmailValidation:
+    @pytest.mark.parametrize("adresse, valide", [
+        ("vous@exemple.com", True), ("prenom.nom+demo@gmail.com", True),
+        ("x@y", False), ("a b@c.com", False), ("<a@b.com>", False),
+        ("a@b.com\r\nBcc: z@z.com", False), ("a@b.com\n", False), ("a" * 250 + "@b.com", False),
+    ])
+    def test_format(self, adresse, valide):
+        assert service.email_valide(adresse) is valide
+
+    def test_requete_valide(self):
+        r = service.valider_requete(requete_email(destinataire=" vous@exemple.com ", expediteur="moi@exemple.com"))
+        assert (r.destinataire, r.expediteur) == ("vous@exemple.com", "moi@exemple.com")
+
+    @pytest.mark.parametrize("email, champ", [
+        ({"destinataire": "pas-une-adresse"}, "destinataire"),
+        ({"destinataire": "vous@exemple.com", "expediteur": "moi@"}, "expediteur"),
+        ({"expediteur": "moi@exemple.com"}, "destinataire"),
+    ])
+    def test_adresses_invalides(self, email, champ):
+        with pytest.raises(service.ErreurValidation) as e:
+            service.valider_requete(requete_email(**email))
+        assert champ in e.value.erreurs
+
+    def test_reserve_aux_inventaires_d_exemple(self):
+        with pytest.raises(service.ErreurValidation) as e:
+            service.valider_requete(requete(source="import", nom="x.csv", email={"destinataire": "vous@exemple.com"}))
+        assert "réservé" in e.value.erreurs["destinataire"]
+
+    def test_contenu_verrouille(self):
+        lignes = lignes_exemple()
+        lignes[0]["produit"] = "Achetez maintenant sur http://spam.example"
+        with pytest.raises(service.ErreurValidation) as e:
+            service.valider_requete(requete(lignes=lignes, email={"destinataire": "vous@exemple.com"}))
+        assert "quantités" in e.value.erreurs["destinataire"]
+
+    def test_quantites_modifiables(self):
+        lignes = lignes_exemple()
+        lignes[0]["quantite"] = 0
+        assert service.valider_requete(requete(lignes=lignes, email={"destinataire": "vous@exemple.com"})).destinataire
+
+
+class TestEmailEnvoi:
+    def test_envoi_reel(self, reseau, envoi_actif, emails_envoyes):
+        evenements = executer(requete_email(destinataire="vous@exemple.com", expediteur="moi@exemple.com"))
+        donnees = resultat_email(evenements)
+        assert donnees["envoi"]["etat"] == "envoye"
+        assert etapes(evenements)["cas3"]["resume"] == "Email envoyé à vous@exemple.com"
+        envoi = emails_envoyes[0]
+        assert envoi["destinataire"] == "vous@exemple.com" and envoi["compte"] == "demo.relais@gmail.com"
+        message = envoi["message"]
+        assert message["To"] == "vous@exemple.com"
+        assert message["Reply-To"] == "moi@exemple.com"
+        assert "demo.relais@gmail.com" in message["From"]          # Gmail envoie depuis le compte de la démo
+        assert [p.get_filename() for p in message.walk() if p.get_filename()][0].startswith("rapport_alerte_")
+
+    def test_sans_destinataire_rien_n_est_envoye(self, reseau, envoi_actif, emails_envoyes):
+        donnees = resultat_email(executer(requete()))
+        assert donnees["envoi"]["etat"] == "non_demande"
+        assert emails_envoyes == []
+
+    def test_serveur_non_configure(self, reseau, monkeypatch, emails_envoyes):
+        monkeypatch.setattr(service, "envoi_email_actif", lambda: False)
+        donnees = resultat_email(executer(requete_email(destinataire="vous@exemple.com")))
+        assert donnees["envoi"]["etat"] == "indisponible"
+        assert emails_envoyes == []
+
+    def test_compte_du_modele_non_configure(self, monkeypatch):
+        monkeypatch.setattr(service.config, "EMAIL_EXPEDITEUR", "votre.adresse@gmail.com")
+        monkeypatch.setattr(service.config, "MOT_DE_PASSE_APP", "xxxx xxxx xxxx xxxx")
+        assert service.envoi_email_actif() is False
+
+    def test_limite_par_visiteur(self, reseau, envoi_actif, monkeypatch, emails_envoyes):
+        monkeypatch.setattr(service, "LIMITEUR_ENVOIS", service.LimiteurEnvois(par_visiteur=1))
+        executer(requete_email(destinataire="a@exemple.com"))
+        evenements = executer(requete_email(destinataire="b@exemple.com"))
+        assert resultat_email(evenements)["envoi"]["etat"] == "refuse"
+        assert "par heure" in resultat_email(evenements)["envoi"]["message"]
+        assert len(emails_envoyes) == 1
+        assert evenements[-1]["type"] == "fin"                    # le pipeline va quand même au bout
+
+    def test_limite_par_destinataire_insensible_a_la_casse(self, reseau, envoi_actif, monkeypatch, emails_envoyes):
+        monkeypatch.setattr(service, "LIMITEUR_ENVOIS", service.LimiteurEnvois(par_destinataire=1))
+        executer(requete_email(destinataire="vous@exemple.com"))
+        evenements = executer(requete_email(destinataire="VOUS@exemple.com"))
+        assert resultat_email(evenements)["envoi"]["etat"] == "refuse"
+
+    def test_echec_smtp(self, reseau, envoi_actif, monkeypatch):
+        def panne(*_):
+            raise OSError("connexion refusée")
+        monkeypatch.setattr(service.cas3_email, "envoyer", panne)
+        evenements = executer(requete_email(destinataire="vous@exemple.com"))
+        assert resultat_email(evenements)["envoi"]["etat"] == "echec"
+        assert etapes(evenements)["cas3"]["etat"] == "erreur"
+        assert etapes(evenements)["cas6"]["etat"] == "termine"
+        assert evenements[-1]["type"] == "fin"

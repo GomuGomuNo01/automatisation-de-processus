@@ -62,11 +62,14 @@ def construire_message(
     nom_rapport: str,
     expediteur: str,
     destinataire: str,
+    repondre_a: str | None = None,
 ) -> MIMEMultipart:
     """Email d'alerte : tableau HTML des ruptures + rapport Excel en pièce jointe."""
     msg = MIMEMultipart()
     msg["From"]    = expediteur
     msg["To"]      = destinataire
+    if repondre_a:
+        msg["Reply-To"] = repondre_a
     msg["Subject"] = (
         f"[ALERTE STOCK] {len(alertes)} produit(s) en rupture - "
         f"{datetime.now().strftime('%d/%m/%Y')}"
@@ -79,6 +82,13 @@ def construire_message(
     pj.add_header("Content-Disposition", f"attachment; filename={nom_rapport}")
     msg.attach(pj)
     return msg
+
+
+def envoyer(msg: MIMEMultipart, compte: str, mot_de_passe: str, destinataire: str) -> None:
+    """Envoie le message par Gmail (SMTP SSL, port 465). Lève une exception en cas d'échec."""
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as srv:
+        srv.login(compte, mot_de_passe)
+        srv.sendmail(compte, destinataire, msg.as_string())
 
 
 def run(inventaire_path: Path, output_dir: Path) -> None:
@@ -113,9 +123,7 @@ def run(inventaire_path: Path, output_dir: Path) -> None:
     # Envoi
     print(f"  Envoi vers {config.EMAIL_DESTINATAIRE} ...")
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as srv:
-            srv.login(config.EMAIL_EXPEDITEUR, config.MOT_DE_PASSE_APP)
-            srv.sendmail(config.EMAIL_EXPEDITEUR, config.EMAIL_DESTINATAIRE, msg.as_string())
+        envoyer(msg, config.EMAIL_EXPEDITEUR, config.MOT_DE_PASSE_APP, config.EMAIL_DESTINATAIRE)
         print("  Email envoye avec succes.")
     except Exception as e:
         print(f"  Erreur envoi : {e}")

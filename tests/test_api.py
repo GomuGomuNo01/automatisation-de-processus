@@ -179,3 +179,22 @@ class TestPipeline:
         fin = lire_ndjson(client.post("/api/pipeline", json=REQUETE))[-1]
         r = client.get(f"/api/executions/{fin['id']}/fichiers/..%2F..%2Fconfig.py")
         assert r.status_code == 404
+
+
+class TestEnvoiEmail:
+    def test_configuration_exposee(self, client):
+        envoi = client.get("/api/inventaires").json()["envoi_email"]
+        assert set(envoi) == {"actif", "par_heure", "par_destinataire_jour"}
+
+    def test_identifiant_visiteur(self):
+        from starlette.requests import Request
+        requete = Request({"type": "http", "headers": [(b"x-forwarded-for", b"203.0.113.7, 10.0.0.2")],
+                           "client": ("10.0.0.3", 1234)})
+        assert api.identifiant_visiteur(requete) == "203.0.113.7"
+        assert api.identifiant_visiteur(Request({"type": "http", "headers": [], "client": ("10.0.0.3", 1)})) == "10.0.0.3"
+
+    def test_adresse_invalide_422(self, client):
+        lignes = service.lire_inventaire("gaming_multimedia")["lignes"]
+        r = client.post("/api/pipeline", json={**REQUETE, "lignes": lignes, "email": {"destinataire": "pas@"}})
+        assert r.status_code == 422
+        assert "destinataire" in r.json()["erreurs"]

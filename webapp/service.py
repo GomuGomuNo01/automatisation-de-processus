@@ -31,7 +31,8 @@ import threading
 import time
 import unicodedata
 import zipfile
-from collections import OrderedDict
+from collections import OrderedDict, deque
+from email.utils import formataddr
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -111,6 +112,17 @@ DUREE_CACHE_SCRAPING  = 600         # secondes : on ne sollicite pas le site à 
 
 EXPEDITEUR_DEMO   = "alertes-stock@example.com"
 DESTINATAIRE_DEMO = "responsable.logistique@example.com"
+
+# Envoi réel de l'alerte (Cas 3) : un compte Gmail dédié à la démo envoie, ses
+# identifiants viennent des secrets de l'hébergeur (EMAIL_EXPEDITEUR, MOT_DE_PASSE_APP).
+# Le visiteur choisit le destinataire ; son adresse d'expéditeur va en « Répondre à ».
+NOM_EXPEDITEUR_DEMO = "Relais · alertes stock"
+VALEURS_MODELE = {"votre.adresse@gmail.com", "xxxx xxxx xxxx xxxx", ""}
+RE_EMAIL = re.compile(r"[^@\s<>()\[\]\\,;:\"']+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+LONGUEUR_MAX_EMAIL = 254
+ENVOIS_PAR_VISITEUR_HEURE = 3
+ENVOIS_PAR_DESTINATAIRE_JOUR = 2
+ENVOIS_PAR_JOUR = 50
 
 FICHIER_SECOURS_SCRAPING = Path(__file__).resolve().parent / "donnees" / "scraping_secours.json"
 
@@ -195,6 +207,66 @@ class CacheExecutions:
 
 CACHE_EXECUTIONS = CacheExecutions()
 _PLACES = threading.BoundedSemaphore(EXECUTIONS_SIMULTANEES)
+
+
+# ============================================================
+# ENVOI RÉEL DE L'EMAIL : configuration et limites anti-abus
+# ============================================================
+
+def envoi_email_actif() -> bool:
+    """Vrai si un vrai compte d'envoi est configuré (pas les valeurs du modèle .env.example)."""
+    compte = (config.EMAIL_EXPEDITEUR or "").strip()
+    mot_de_passe = (config.MOT_DE_PASSE_APP or "").strip()
+    return compte not in VALEURS_MODELE and "@" in compte and mot_de_passe not in VALEURS_MODELE
+
+
+def email_valide(adresse: str) -> bool:
+    return len(adresse) <= LONGUEUR_MAX_EMAIL and bool(RE_EMAIL.fullmatch(adresse))
+
+
+class LimiteurEnvois:
+    """
+    Fenêtres glissantes en mémoire : par visiteur (heure), par destinataire (jour)
+    et au total (jour). Une seule instance de serveur : c'est suffisant.
+    """
+
+    MESSAGES = {
+        "visiteur": "limite de {max} envois par heure atteinte, réessayez dans {attente} min",
+        "destinataire": "cette adresse a déjà reçu {max} alertes aujourd'hui",
+        "total": "limite quotidienne d'envois de la démo atteinte, réessayez demain",
+    }
+
+    def __init__(self, par_visiteur: int = ENVOIS_PAR_VISITEUR_HEURE,
+                 par_destinataire: int = ENVOIS_PAR_DESTINATAIRE_JOUR, total: int = ENVOIS_PAR_JOUR):
+        self.regles = {"visiteur": (par_visiteur, 3600), "destinataire": (par_destinataire, 86400),
+                       "total": (total, 86400)}
+        self._historique: dict = {}
+        self._verrou = threading.Lock()
+
+    def _file(self, cle: tuple, maintenant: float, duree: float) -> deque:
+        file = self._historique.setdefault(cle, deque())
+        while file and maintenant - file[0] > duree:
+            file.popleft()
+        return file
+
+    def reserver(self, visiteur: str, destinataire: str) -> Optional[str]:
+        """Enregistre l'envoi et renvoie None, ou renvoie la raison du refus."""
+        maintenant = time.monotonic()
+        cles = {"visiteur": ("visiteur", visiteur), "destinataire": ("destinataire", destinataire.lower()),
+                "total": ("total",)}
+        with self._verrou:
+            for nom, cle in cles.items():
+                maximum, duree = self.regles[nom]
+                file = self._file(cle, maintenant, duree)
+                if len(file) >= maximum:
+                    attente = max(1, round((duree - (maintenant - file[0])) / 60))
+                    return self.MESSAGES[nom].format(max=maximum, attente=attente)
+            for cle in cles.values():
+                self._historique[cle].append(maintenant)
+        return None
+
+
+LIMITEUR_ENVOIS = LimiteurEnvois()
 
 
 # ============================================================
@@ -408,6 +480,8 @@ class Requete:
     seuil_formulaire: int
     rapport: bool
     scraping: bool
+    destinataire: Optional[str] = None   # envoi réel de l'alerte (Cas 3)
+    expediteur: Optional[str] = None     # placé en « Répondre à »
 
 
 def _entier_requete(valeur, champ: str, minimum: int, maximum: int, erreurs: dict, message: str) -> int:
@@ -475,11 +549,32 @@ def valider_requete(donnees) -> Requete:
                             f"Le seuil du formulaire est un entier de 1 à {SEUIL_FORMULAIRE_MAX}.")
     cas = donnees.get("cas") if isinstance(donnees.get("cas"), dict) else {}
 
+    # Envoi réel de l'email : adresses valides, et contenu verrouillé (inventaire
+    # d'exemple, noms de produits identiques à ceux du serveur : seules les
+    # quantités changent). Impossible d'y glisser du texte libre.
+    email = donnees.get("email") if isinstance(donnees.get("email"), dict) else {}
+    destinataire = email.get("destinataire") if isinstance(email.get("destinataire"), str) else ""
+    expediteur = email.get("expediteur") if isinstance(email.get("expediteur"), str) else ""
+    destinataire, expediteur = destinataire.strip(), expediteur.strip()
+    if destinataire and not email_valide(destinataire):
+        erreurs["destinataire"] = "Adresse email du destinataire invalide."
+    if expediteur and not email_valide(expediteur):
+        erreurs["expediteur"] = "Adresse email de l'expéditeur invalide."
+    if expediteur and not destinataire:
+        erreurs.setdefault("destinataire", "Indiquez le destinataire de l'alerte.")
+    if destinataire and source == "import":
+        erreurs["destinataire"] = "L'envoi réel est réservé aux inventaires d'exemple."
+    if destinataire and source == "exemple" and cle in INVENTAIRES and "lignes" not in erreurs:
+        attendus = [l["produit"] for l in _inventaire_exemple(cle)]
+        if [l["produit"] for l in lignes] != attendus:
+            erreurs["destinataire"] = "Pour l'envoi réel, seules les quantités de l'inventaire d'exemple sont modifiables."
+
     if erreurs:
         raise ErreurValidation(erreurs)
     return Requete(nom, cle, lignes, production, mode, seuil,
                    rapport=cas.get("rapport", True) is not False,
-                   scraping=cas.get("scraping", True) is not False)
+                   scraping=cas.get("scraping", True) is not False,
+                   destinataire=destinataire or None, expediteur=expediteur or None)
 
 
 # ============================================================
@@ -610,8 +705,9 @@ MEDIA_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 class _Pipeline:
     """Une exécution : émet les événements et collecte les fichiers produits."""
 
-    def __init__(self, requete: Requete, emettre: Emetteur):
+    def __init__(self, requete: Requete, emettre: Emetteur, visiteur: str = ""):
         self.requete = requete
+        self.visiteur = visiteur
         self._emettre = emettre
         self.horodatage = datetime.now().strftime("%Y-%m-%d_%H-%M")
         base = Path(requete.nom_inventaire).stem.replace("inventaire_", "") or "inventaire"
@@ -717,6 +813,7 @@ class _Pipeline:
         return alertes
 
     def _cas3(self, alertes: pd.DataFrame) -> None:
+        r = self.requete
         with self.etape("cas3") as suivi:
             if alertes.empty:
                 self.log("Aucune rupture — pas d'alerte email.")
@@ -724,20 +821,55 @@ class _Pipeline:
                 return
             self.log(f"{len(alertes)} rupture(s) — préparation de l'alerte email…")
             nom_rapport, rapport = self._rapport_alerte
-            message = cas3_email.construire_message(alertes, rapport, nom_rapport, EXPEDITEUR_DEMO, DESTINATAIRE_DEMO)
+            envoi_reel = bool(r.destinataire) and envoi_email_actif()
+            expediteur = formataddr((NOM_EXPEDITEUR_DEMO, config.EMAIL_EXPEDITEUR)) if envoi_reel else EXPEDITEUR_DEMO
+            destinataire = r.destinataire or DESTINATAIRE_DEMO
+            message = cas3_email.construire_message(alertes, rapport, nom_rapport, expediteur, destinataire,
+                                                    repondre_a=r.expediteur)
             nom = self.fichier(f"alerte_stock_{self.horodatage}.eml", message.as_bytes(), "message/rfc822", 3,
                                "Email d'alerte (.eml)")
-            self.log(f"  Email prêt pour {DESTINATAIRE_DEMO} (pièce jointe : {nom_rapport})", "ok")
-            self.log("  Démo en ligne : l'email n'est pas envoyé, il se télécharge en .eml.")
+            self.log(f"  Email prêt pour {destinataire} (pièce jointe : {nom_rapport})", "ok")
+
+            envoi = {"etat": "non_demande"}
+            if r.destinataire and not envoi_email_actif():
+                envoi = {"etat": "indisponible", "message": "L'envoi réel n'est pas configuré sur ce serveur."}
+                self.log("  Envoi réel non configuré sur ce serveur : l'email se télécharge en .eml.", "alerte")
+            elif envoi_reel:
+                refus = LIMITEUR_ENVOIS.reserver(self.visiteur, r.destinataire)
+                if refus:
+                    envoi = {"etat": "refuse", "message": refus[0].upper() + refus[1:] + "."}
+                    self.log(f"  Envoi refusé : {refus}.", "alerte")
+                else:
+                    self.log(f"  Envoi vers {r.destinataire} via Gmail (SMTP SSL)…")
+                    try:
+                        cas3_email.envoyer(message, config.EMAIL_EXPEDITEUR, config.MOT_DE_PASSE_APP, r.destinataire)
+                        envoi = {"etat": "envoye", "heure": datetime.now().strftime("%H:%M")}
+                        self.log("  Email envoyé avec succès.", "ok")
+                    except Exception:
+                        logger.exception("Envoi de l'email d'alerte en échec")
+                        envoi = {"etat": "echec", "message": "Le serveur d'envoi a refusé le message. Réessayez plus tard."}
+                        self.log("  Erreur d'envoi : le serveur d'envoi a refusé le message.", "erreur")
+            else:
+                self.log("  Sans adresse de destinataire, l'email n'est pas envoyé : il se télécharge en .eml.")
+
             self.resultat("cas3", {
-                "de": EXPEDITEUR_DEMO,
-                "a": DESTINATAIRE_DEMO,
+                "de": f"{NOM_EXPEDITEUR_DEMO} <{config.EMAIL_EXPEDITEUR}>" if envoi_reel else expediteur,
+                "a": destinataire,
+                "repondre_a": r.expediteur,
                 "objet": message["Subject"],
                 "html": cas3_email._construire_html(alertes),
                 "piece_jointe": nom_rapport,
                 "fichier": nom,
+                "envoi": envoi,
             })
-            suivi["resume"] = f"Email prêt : {len(alertes)} produit(s) signalé(s)"
+            if envoi["etat"] == "envoye":
+                suivi["resume"] = f"Email envoyé à {r.destinataire}"
+            elif envoi["etat"] in ("refuse", "echec", "indisponible"):
+                raison = envoi["message"][0].lower() + envoi["message"][1:]
+                suivi.update(etat="erreur" if envoi["etat"] == "echec" else "termine",
+                             resume=f"Email prêt, non envoyé : {raison}")
+            else:
+                suivi["resume"] = f"Email prêt : {len(alertes)} produit(s) signalé(s)"
 
     def _cas6(self, ruptures: int) -> None:
         seuil = self.requete.seuil_formulaire
@@ -854,13 +986,13 @@ class _Pipeline:
             suivi["resume"] = f"Surveillance {surveillance['frequence']}"
 
 
-def executer_pipeline(requete: Requete, emettre: Emetteur) -> None:
+def executer_pipeline(requete: Requete, emettre: Emetteur, visiteur: str = "") -> None:
     """Point d'entrée de l'API : exécute le pipeline et émet ses événements."""
     if not _PLACES.acquire(timeout=ATTENTE_MAX_PLACE):
         emettre({"type": "erreur", "message": MESSAGE_OCCUPE})
         return
     try:
-        _Pipeline(requete, emettre).executer()
+        _Pipeline(requete, emettre, visiteur).executer()
     except Exception:
         logger.exception("Pipeline en échec")
         emettre({"type": "erreur", "message": MESSAGE_ERREUR_INATTENDUE})

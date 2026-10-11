@@ -14,6 +14,8 @@ const SEUIL_MIN = 1;
 const SEUIL_MAX = 50;
 const TAILLE_MAX = 2 * 1024 * 1024;
 const CATEGORIE_IMPORT = 'Téléphones tactiles';
+// Même règle que le serveur (webapp/service.py) : une adresse simple, sans espace ni chevrons
+const RE_EMAIL = /^[^@\s<>()[\]\\,;:"']+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
 const form = document.getElementById('demo-form');
 const el = {
@@ -35,6 +37,11 @@ const el = {
   prevRuptures: form.querySelector('[data-forecast-ruptures]'),
   prevTotal: form.querySelector('[data-forecast-total]'),
   prevListe: form.querySelector('[data-forecast-list]'),
+  mail: form.querySelector('[data-mail-config]'),
+  destinataire: form.querySelector('input[name="email_destinataire"]'),
+  expediteur: form.querySelector('input[name="email_expediteur"]'),
+  mailNote: form.querySelector('[data-mail-note]'),
+  mailNoteTexte: form.querySelector('[data-mail-note-text]'),
 };
 
 const state = {
@@ -47,6 +54,7 @@ const state = {
   production: null,     // import uniquement
   importe: null,        // dernier import réussi { nom, lignes, production }
   pret: false,
+  envoi: { actif: false, par_heure: 3, par_destinataire_jour: 2 },   // envoi réel de l'email, selon le serveur
 };
 const cacheInventaires = new Map();
 let surLancement = () => {};
@@ -100,6 +108,7 @@ async function choisirExemple(cle) {
   el.import.hidden = true;
   const inv = state.inventaires.find((i) => i.cle === cle);
   el.categorie.textContent = inv ? `catalogue ${inv.categorie_scraping}` : 'catalogue en ligne';
+  majBlocEmail();
   if (!cacheInventaires.has(cle)) {
     rendreChargement();
     try {
@@ -120,6 +129,7 @@ function choisirImport() {
   state.source = 'import';
   el.import.hidden = false;
   el.categorie.textContent = `catalogue ${CATEGORIE_IMPORT} (par défaut)`;
+  majBlocEmail();
   if (state.importe) {
     state.nom = state.importe.nom;
     state.production = state.importe.production;
@@ -348,6 +358,68 @@ function initImport() {
 }
 
 /* ==========================================================================
+   ALERTE EMAIL : EMAIL_DESTINATAIRE et EMAIL_EXPEDITEUR réglables ici
+   L'envoi réel part du compte de la démo, seulement avec un inventaire
+   d'exemple (contenu verrouillé) et dans les limites fixées par le serveur.
+   ========================================================================== */
+const envoiPossible = () => state.envoi.actif && state.source === 'exemple';
+
+function lireEmail(input) {
+  const valeur = input.value.trim();
+  return { valeur, valide: !valeur || RE_EMAIL.test(valeur) };
+}
+
+function majBlocEmail() {
+  const possible = envoiPossible();
+  el.mail.dataset.disabled = String(!possible);
+  [el.destinataire, el.expediteur].forEach((input) => { input.disabled = !possible; });
+  if (!state.envoi.actif) {
+    el.mailNote.dataset.type = 'warning';
+    el.mailNoteTexte.textContent = 'L\'envoi réel n\'est pas configuré sur ce serveur : l\'email se télécharge en .eml après l\'exécution.';
+  } else if (state.source === 'import') {
+    el.mailNote.dataset.type = 'warning';
+    el.mailNoteTexte.textContent = 'L\'envoi réel est réservé aux inventaires d\'exemple (contenu verrouillé). Avec un fichier importé, l\'email se télécharge en .eml.';
+  } else {
+    delete el.mailNote.dataset.type;
+    el.mailNoteTexte.textContent = `Contenu verrouillé : seules les quantités de l'inventaire d'exemple sont modifiables. ${state.envoi.par_heure} envois par heure et ${state.envoi.par_destinataire_jour} par adresse et par jour au plus.`;
+  }
+}
+
+function validerEmails({ silencieux = false, complet = false } = {}) {
+  if (!envoiPossible()) {
+    afficherErreur('destinataire', '');
+    afficherErreur('expediteur', '');
+    return true;
+  }
+  const dest = lireEmail(el.destinataire);
+  const exp = lireEmail(el.expediteur);
+  let ok = true;
+  const signaler = (champ, input, message) => {
+    input.setAttribute('aria-invalid', String(Boolean(message)));
+    if (message) ok = false;
+    if (!message || !silencieux) afficherErreur(champ, message);
+  };
+  signaler('destinataire', el.destinataire,
+    !dest.valide ? 'Adresse email invalide (exemple : vous@exemple.com).'
+      : complet && exp.valeur && !dest.valeur ? 'Indiquez le destinataire de l\'alerte.' : '');
+  signaler('expediteur', el.expediteur, exp.valide ? '' : 'Adresse email invalide (exemple : vous@entreprise.com).');
+  return ok;
+}
+
+function emailDemande() {
+  const dest = lireEmail(el.destinataire);
+  return envoiPossible() && dest.valeur && dest.valide ? dest.valeur : '';
+}
+
+function initEmail() {
+  [el.destinataire, el.expediteur].forEach((input) => {
+    // Pendant la saisie : on efface l'erreur dès que l'adresse devient valide, sans en afficher de nouvelle
+    input.addEventListener('input', () => { validerEmails({ silencieux: true }); mettreAJour(); });
+    input.addEventListener('blur', () => validerEmails());
+  });
+}
+
+/* ==========================================================================
    PARAMÈTRES ET PRÉVISION
    ========================================================================== */
 function lireSeuil() {
@@ -395,7 +467,9 @@ function mettreAJour() {
   const categorie = state.source === 'exemple' ? inv?.categorie_scraping : CATEGORIE_IMPORT;
   const items = {
     cas1: [true, 'Rapport d\'alerte Excel', `toujours · ${pluriel(ruptures, 'ligne')}`],
-    cas3: [ruptures > 0, 'Email d\'alerte', ruptures > 0 ? `${ruptures} rupture(s) > 0` : 'aucune rupture : pas d\'email'],
+    cas3: [ruptures > 0, emailDemande() && ruptures > 0 ? 'Email envoyé à votre adresse' : 'Email d\'alerte',
+      ruptures === 0 ? 'aucune rupture : pas d\'email'
+        : emailDemande() ? `${ruptures} rupture(s) > 0 · vers ${emailDemande()}` : `${ruptures} rupture(s) > 0 · .eml à télécharger`],
     cas6: [seuil !== null && ruptures >= seuil, 'Formulaire d\'urgence',
       seuil === null ? 'seuil à corriger' : ruptures >= seuil ? `${ruptures} ≥ seuil ${seuil}` : `${ruptures} < seuil ${seuil}`],
     cas2: [el.rapport.checked && productionDispo, 'Rapport hebdomadaire',
@@ -468,20 +542,21 @@ export function payload() {
     mode: mode(),
     seuil_formulaire: lireSeuil(),
     cas: { rapport: el.rapport.checked, scraping: el.scraping.checked },
+    email: emailDemande() ? { destinataire: emailDemande(), expediteur: lireEmail(el.expediteur).valeur } : undefined,
   };
 }
 
 /** Réglages courants, après le premier chargement (boutons « Lancer le pipeline ») */
 export async function payloadPret() {
   await chargement;
-  if (!state.lignes.length || lireSeuil() === null) return null;
+  if (!state.lignes.length || lireSeuil() === null || !validerEmails({ complet: true })) return null;
   return payload();
 }
 
 /** Erreurs renvoyées par le serveur (422) : affichées près des champs concernés */
 export function afficherErreursServeur(erreurs) {
   Object.entries(erreurs ?? {}).forEach(([champ, message]) => {
-    const cible = { lignes: 'lignes', seuil_formulaire: 'seuil_formulaire' }[champ] ?? 'inventaires';
+    const cible = { lignes: 'lignes', seuil_formulaire: 'seuil_formulaire', destinataire: 'destinataire', expediteur: 'expediteur' }[champ] ?? 'inventaires';
     afficherErreur(cible, message);
   });
 }
@@ -496,12 +571,17 @@ export function initDemo({ onLaunch }) {
   initTableau();
   initImport();
   initParametres();
+  initEmail();
   validerSeuil({ silencieux: true });
   mettreAJour();
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     if (!validerSeuil()) { el.seuil.focus(); return; }
+    if (!validerEmails({ complet: true })) {
+      (el.destinataire.getAttribute('aria-invalid') === 'true' ? el.destinataire : el.expediteur).focus();
+      return;
+    }
     if (!state.lignes.length) {
       afficherErreur('lignes', state.source === 'import' ? 'Importez d\'abord un inventaire.' : 'L\'inventaire est vide.');
       return;
@@ -515,6 +595,7 @@ export function initDemo({ onLaunch }) {
       const reponse = await getJSON('api/inventaires');
       state.inventaires = reponse.inventaires;
       if (reponse.seuil_formulaire) el.seuil.value = reponse.seuil_formulaire;
+      if (reponse.envoi_email) state.envoi = reponse.envoi_email;
       state.cle = state.inventaires[0]?.cle ?? null;
       rendreChoix();
       if (state.cle) await choisirExemple(state.cle);
@@ -526,6 +607,7 @@ export function initDemo({ onLaunch }) {
       el.corps.innerHTML = '';
     } finally {
       validerSeuil({ silencieux: true });
+      majBlocEmail();
       mettreAJour();
     }
   })();

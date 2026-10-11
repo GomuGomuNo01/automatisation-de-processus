@@ -71,6 +71,19 @@ def _est_route_appli(chemin: str) -> bool:
     return chemin == "/" or chemin == "/assets" or chemin.startswith(PREFIXES_APPLI)
 
 
+def identifiant_visiteur(request: Request) -> str:
+    """
+    Adresse du visiteur pour les limites d'envoi : le premier maillon de
+    X-Forwarded-For (le client d'origine derrière les proxys de l'hébergeur),
+    sinon l'adresse TCP. Falsifiable, mais les limites par destinataire et par
+    jour, elles, ne dépendent pas du visiteur.
+    """
+    relais = [a.strip() for a in request.headers.get("x-forwarded-for", "").split(",") if a.strip()]
+    if relais:
+        return relais[0][:64]
+    return request.client.host if request.client else "inconnu"
+
+
 def _reponse_erreurs(erreurs: dict, statut: int = 422) -> JSONResponse:
     return JSONResponse({"erreurs": erreurs}, status_code=statut)
 
@@ -170,8 +183,15 @@ async def page_accueil(request: Request) -> Response:
 
 
 async def inventaires(request: Request) -> Response:
-    return JSONResponse({"inventaires": service.lister_inventaires(),
-                         "seuil_formulaire": service.config.SEUIL_FORMULAIRE})
+    return JSONResponse({
+        "inventaires": service.lister_inventaires(),
+        "seuil_formulaire": service.config.SEUIL_FORMULAIRE,
+        "envoi_email": {
+            "actif": service.envoi_email_actif(),
+            "par_heure": service.ENVOIS_PAR_VISITEUR_HEURE,
+            "par_destinataire_jour": service.ENVOIS_PAR_DESTINATAIRE_JOUR,
+        },
+    })
 
 
 async def inventaire(request: Request) -> Response:
@@ -227,7 +247,8 @@ async def lancer_pipeline(request: Request) -> Response:
         requete = service.valider_requete(donnees)
     except service.ErreurValidation as e:
         return _reponse_erreurs(e.erreurs)
-    flux = flux_evenements(lambda emettre: service.executer_pipeline(requete, emettre))
+    visiteur = identifiant_visiteur(request)
+    flux = flux_evenements(lambda emettre: service.executer_pipeline(requete, emettre, visiteur))
     return StreamingResponse(flux, media_type=MEDIA_NDJSON, headers=ENTETES_FLUX)
 
 

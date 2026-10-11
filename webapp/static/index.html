@@ -627,6 +627,32 @@
                 </div>
               </div>
             </fieldset>
+
+            <!-- 03 Alerte email : les deux variables du .env, réglables ici -->
+            <fieldset class="demo-block mail-config" data-mail-config>
+              <legend class="demo-block__legend"><span class="mono demo-block__num">03</span>Recevoir l'alerte par email</legend>
+              <p class="mail-config__intro">
+                Facultatif&nbsp;: indiquez votre adresse et l'alerte du Cas 3 arrive vraiment dans votre boîte, rapport Excel en pièce jointe. Sans adresse, l'email se télécharge en .eml.
+              </p>
+              <div class="mail-config__grid">
+                <div class="field">
+                  <label class="field__label" for="email-destinataire">Destinataire <span class="tag">EMAIL_DESTINATAIRE</span></label>
+                  <input class="input" id="email-destinataire" name="email_destinataire" type="email" inputmode="email" autocomplete="email" spellcheck="false" maxlength="254" placeholder="vous@exemple.com" aria-describedby="email-destinataire-hint">
+                  <p class="field__hint" id="email-destinataire-hint">L'adresse qui reçoit l'alerte.</p>
+                  <p class="field__error" data-error="destinataire" hidden></p>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="email-expediteur">Expéditeur <span class="tag">EMAIL_EXPEDITEUR</span> <span class="muted xs">facultatif</span></label>
+                  <input class="input" id="email-expediteur" name="email_expediteur" type="email" inputmode="email" autocomplete="off" spellcheck="false" maxlength="254" placeholder="votre.adresse@entreprise.com" aria-describedby="email-expediteur-hint">
+                  <p class="field__hint" id="email-expediteur-hint">Placée en «&nbsp;Répondre à&nbsp;»&nbsp;: Gmail envoie toujours depuis le compte de la démo.</p>
+                  <p class="field__error" data-error="expediteur" hidden></p>
+                </div>
+              </div>
+              <p class="panel__note" data-mail-note>
+                <svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg>
+                <span data-mail-note-text>Contenu verrouillé&nbsp;: seules les quantités de l'inventaire d'exemple sont modifiables. 3 envois par heure au plus.</span>
+              </p>
+            </fieldset>
           </div>
 
           <!-- Prévision en direct + lancement -->
@@ -699,7 +725,8 @@
           <details class="accordion__item">
             <summary class="accordion__summary">L'email d'alerte est-il vraiment envoyé&nbsp;?<span class="accordion__toggle" aria-hidden="true"></span></summary>
             <div class="accordion__content">
-              <p>En local, oui&nbsp;: par Gmail, avec un mot de passe d'application. Dans cette démo publique, l'email est construit à l'identique (même contenu, même pièce jointe) mais il n'est pas envoyé&nbsp;: vous le téléchargez en .eml et l'ouvrez dans votre messagerie.</p>
+              <p>Oui, si vous le demandez&nbsp;: indiquez votre adresse dans la démo (étape 03, «&nbsp;Recevoir l'alerte par email&nbsp;») et l'alerte part par Gmail, rapport Excel en pièce jointe. Elle est envoyée depuis le compte de la démo&nbsp;; l'adresse d'expéditeur que vous indiquez est placée en «&nbsp;Répondre à&nbsp;».</p>
+              <p>Pour éviter les abus, l'envoi réel est réservé aux inventaires d'exemple (seules les quantités changent) et limité à 3 envois par heure et 2 par adresse et par jour. Sans adresse, l'email se télécharge en .eml. En local, il part du compte Gmail configuré dans le fichier .env.</p>
             </div>
           </details>
           <details class="accordion__item">

@@ -120,19 +120,34 @@ function panneauStock(d) {
     ${note(`Fichier généré : <span class="mono">${esc(d.fichier)}</span> (les produits en rupture, colonne Statut = RUPTURE).`)}`;
 }
 
+function statutEnvoi(d) {
+  const envoi = d.envoi ?? { etat: 'non_demande' };
+  if (envoi.etat === 'envoye') {
+    return `<div class="receipt__response">${icon('check-circle')}
+      <span><strong>Email envoyé à ${esc(d.a)}</strong><span class="mono">Gmail · SMTP SSL · ${esc(envoi.heure)} · pensez à regarder les indésirables</span></span>
+    </div>`;
+  }
+  if (envoi.etat === 'non_demande') {
+    return note('Aucune adresse indiquée : l\'email n\'a pas été envoyé. Renseignez votre adresse à l\'étape 03 de la démo pour le recevoir, ou téléchargez le .eml pour l\'ouvrir dans votre messagerie, pièce jointe comprise.');
+  }
+  return note(`<strong>Email non envoyé.</strong> ${esc(envoi.message)} Le .eml reste téléchargeable ci-dessous.`,
+    { type: 'warning', nomIcone: 'alert' });
+}
+
 function panneauEmail(d, etape) {
   if (!d) return vide('Pas d\'alerte', etape?.resume || 'Aucune rupture : aucun email à envoyer.', 'mail');
   return `
+    ${statutEnvoi(d)}
     <div class="mail">
       <dl class="mail__head">
         <div class="mail__row"><dt>De</dt><dd>${esc(d.de)}</dd></div>
         <div class="mail__row"><dt>À</dt><dd>${esc(d.a)}</dd></div>
+        ${d.repondre_a ? `<div class="mail__row"><dt>Rép. à</dt><dd>${esc(d.repondre_a)}</dd></div>` : ''}
         <div class="mail__row"><dt>Objet</dt><dd class="mail__subject">${esc(d.objet)}</dd></div>
         <div class="mail__row"><dt>Pièce j.</dt><dd><span class="mail__attachment">${icon('sheet', 'icon--sm')}${esc(d.piece_jointe)}</span></dd></div>
       </dl>
       <iframe class="mail__frame" title="Aperçu du contenu de l'email d'alerte" sandbox="" referrerpolicy="no-referrer" loading="lazy" data-srcdoc></iframe>
     </div>
-    ${note('Démo en ligne : l\'email est construit à l\'identique mais <strong>pas envoyé</strong>. Téléchargez le .eml pour l\'ouvrir dans votre messagerie, pièce jointe comprise. En local, il part par Gmail.')}
     <p><a class="btn btn--secondary" href="${esc(lienFichier(d.fichier))}" download>${icon('download', 'icon--sm')}Télécharger l'email (.eml)</a></p>`;
 }
 
