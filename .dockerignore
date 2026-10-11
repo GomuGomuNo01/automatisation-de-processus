@@ -20,3 +20,4 @@ Dockerfile
 .gcloudignore
 render.yaml
 requirements-dev.txt
+assets/

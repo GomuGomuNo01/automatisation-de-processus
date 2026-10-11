@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relais : présentation vidéo</title>
+  <meta name="description" content="Relais en 40 secondes : six automatisations Python enchaînées en un pipeline qui surveille le stock, envoie les alertes, remplit les formulaires d'urgence, compile la production et relève les prix.">
+  <meta name="theme-color" content="#0a0d0c">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='1' y='1' width='30' height='30' rx='8' fill='%23cff24a'/><path d='M7.5 21h5.5l6-10h5.5' fill='none' stroke='%230b0f05' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/><circle cx='7.5' cy='21' r='2.3' fill='%230b0f05'/><circle cx='24.5' cy='11' r='2.3' fill='%230b0f05'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;650&family=Geist+Mono:wght@500;600&family=Geist:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --graphite: #0a0d0c;
+      --panel: #111614;
+      --panel-2: #161d1a;
+      --line: #2c3732;
+      --ink: #edf2ec;
+      --ink-2: #b3c0b8;
+      --ink-3: #8a978f;
+      --volt: #cff24a;
+      --on-volt: #0b0f05;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(to right, rgba(207, 242, 74, .045) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(to bottom, rgba(207, 242, 74, .045) 1px, transparent 1px) 0 0 / 48px 48px,
+        var(--graphite);
+      color: var(--ink);
+      font-family: "Geist", system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 56px 16px 0;
+      overflow-x: hidden;
+    }
+    .mark { width: 52px; height: 52px; }
+    .eyebrow {
+      margin: 22px 0 18px; font: 500 13px/1 "Geist Mono", ui-monospace, monospace;
+      letter-spacing: .3em; text-transform: uppercase; color: var(--ink-3);
+    }
+    .eyebrow b { color: var(--volt); font-weight: 600; }
+    h1 {
+      font-family: "Space Grotesk", sans-serif; font-weight: 650; letter-spacing: -.035em;
+      font-size: clamp(2.2rem, 6vw, 4rem); line-height: 1; margin: 0; text-align: center;
+    }
+    h1 span { background: var(--volt); color: var(--on-volt); padding: 0 .12em; border-radius: .08em; }
+    p.lead { color: var(--ink-2); margin: 18px 0 34px; text-align: center; max-width: 720px; font-size: 1.06rem; line-height: 1.6; }
+    .stage { position: relative; width: 100%; max-width: 1120px; padding: 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); }
+    .stage::before, .stage::after { content: ""; position: absolute; width: 22px; height: 22px; border: 2px solid var(--volt); }
+    .stage::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; border-top-left-radius: 22px; }
+    .stage::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; border-bottom-right-radius: 22px; }
+    .player { border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .8); }
+    video { display: block; width: 100%; height: auto; }
+    .chapters { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 0; margin: 18px 0 0; }
+    .chapters button {
+      font: 500 13px/1 "Geist Mono", monospace; color: var(--ink-2); background: var(--panel-2);
+      border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; cursor: pointer;
+      transition: background-color .18s, color .18s, border-color .18s;
+    }
+    .chapters button:hover { color: var(--ink); border-color: var(--ink-3); }
+    .chapters button[aria-current="true"] { background: var(--volt); color: var(--on-volt); border-color: transparent; }
+    .chapters b { color: var(--volt); margin-right: 6px; }
+    .chapters button[aria-current="true"] b { color: var(--on-volt); }
+    nav { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 36px 0 0; }
+    nav a {
+      text-decoration: none; padding: 14px 22px; border-radius: 8px; font-weight: 600;
+      border: 1px solid var(--line); color: var(--ink); background: transparent;
+    }
+    nav a.primary { background: var(--volt); color: var(--on-volt); border-color: transparent; }
+    nav a:hover { border-color: var(--ink-3); }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--volt); outline-offset: 3px; }
+    footer {
+      width: 100vw; margin-top: 64px; padding: 34px 16px; border-top: 1px solid var(--line);
+      background: rgba(10, 13, 12, .85); color: var(--ink-3); text-align: center;
+    }
+    footer p { margin: 0 auto; max-width: 760px; font-size: .92rem; line-height: 1.6; }
+    footer a { color: var(--ink-2); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="8" fill="#cff24a"/><path d="M7.5 21h5.5l6-10h5.5" fill="none" stroke="#0b0f05" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="21" r="2.3" fill="#0b0f05"/><circle cx="24.5" cy="11" r="2.3" fill="#0b0f05"/></svg>
+  <p class="eyebrow"><b>›</b> Présentation · 40 secondes</p>
+  <h1>Relais <span>en 40 secondes</span></h1>
+  <p class="lead">Six automatisations Python enchaînées en un pipeline&nbsp;: il surveille le stock, envoie les alertes, remplit le formulaire d'urgence, compile la production et relève les prix, puis recommence à son rythme. Le son est activé&nbsp;: la musique a été composée pour la vidéo.</p>
+
+  <div class="stage">
+    <div class="player">
+      <video id="video" controls playsinline preload="metadata" poster="presentation-poster.jpg">
+        <source src="Relais_presentation.mp4" type="video/mp4">
+        Votre navigateur ne lit pas la vidéo : <a href="Relais_presentation.mp4">téléchargez-la</a>.
+      </video>
+    </div>
+  </div>
+
+  <ul class="chapters" aria-label="Chapitres">
+    <li><button type="button" data-t="0"><b>01</b>Relais</button></li>
+    <li><button type="button" data-t="6"><b>02</b>Le constat</button></li>
+    <li><button type="button" data-t="10"><b>03</b>Le pipeline</button></li>
+    <li><button type="button" data-t="18"><b>04</b>Six automatisations</button></li>
+    <li><button type="button" data-t="24"><b>05</b>Le rythme</button></li>
+    <li><button type="button" data-t="28"><b>06</b>La démo en ligne</button></li>
+    <li><button type="button" data-t="34"><b>07</b>En résumé</button></li>
+  </ul>
+
+  <nav aria-label="Liens">
+    <a class="primary" href="https://automatisation-de-processus-cedric.streamlit.app">Tester la démo en ligne</a>
+    <a href="https://github.com/GomuGomuNo01/automatisation-de-processus">Voir le projet sur GitHub</a>
+    <a href="musique.mp3" download>Télécharger la musique (MP3)</a>
+  </nav>
+
+  <footer>
+    <p>Vidéo animée image par image en Python (Pillow), sur une musique originale synthétisée par le code (numpy)&nbsp;: aucun extrait, aucun échantillon, aucune banque d'images, donc aucun droit tiers. Polices Space Grotesk, Geist et Geist Mono (SIL Open Font License). Conçu et développé par Dibie Elisee Jules Cedric KOUADIO.</p>
+  </footer>
+
+  <script>
+    // Chapitres : saut au bon instant, et le chapitre en cours reste signalé
+    const video = document.getElementById('video');
+    const boutons = [...document.querySelectorAll('[data-t]')];
+    boutons.forEach((b) => b.addEventListener('click', () => {
+      video.currentTime = Number(b.dataset.t);
+      video.play().catch(() => {});
+    }));
+    video.addEventListener('timeupdate', () => {
+      let actif = boutons[0];
+      boutons.forEach((b) => { if (video.currentTime >= Number(b.dataset.t)) actif = b; });
+      boutons.forEach((b) => b.setAttribute('aria-current', String(b === actif)));
+    });
+  </script>
+</body>
+</html>

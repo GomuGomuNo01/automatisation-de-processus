@@ -889,3 +889,41 @@ code.mono { padding: 0.1em 0.35em; border-radius: var(--radius-xs); background: 
 .mail-config .panel__note[data-type="warning"] .icon { color: var(--color-warning); }
 .mail-config .panel__note[data-type="ok"] { background: var(--color-success-soft); }
 .mail-config .panel__note[data-type="ok"] .icon { color: var(--color-success); }
+
+/* ==========================================================================
+   AIDE À L'UTILISATION : choix du hero, guide rapide, consignes
+   ========================================================================== */
+.hero__choices { display: grid; gap: var(--space-3); max-width: 36rem; }
+@media (min-width: 40em) { .hero__choices { grid-template-columns: 1fr 1fr; gap: var(--space-5); } }
+.hero__choice dt { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--weight-semibold); font-size: var(--text-small); }
+.hero__choice dt .icon { color: var(--color-signal-ink); }
+.hero__choice dd { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--color-ink-3); line-height: 1.5; }
+
+.guide { padding-bottom: var(--space-8); }
+.guide__card {
+  display: grid;
+  gap: var(--space-5);
+  padding: clamp(var(--space-5), 3vw, var(--space-6));
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+@media (min-width: 64em) { .guide__card { grid-template-columns: 15rem 1fr; align-items: center; } }
+.guide__intro { display: grid; gap: var(--space-2); }
+.guide__steps { list-style: none; padding: 0; display: grid; gap: var(--space-4); }
+@media (min-width: 48em) { .guide__steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.guide__step { display: grid; grid-template-columns: auto 1fr; gap: var(--space-3); align-items: start; }
+.guide__num {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--color-signal); color: var(--color-on-signal); font-weight: var(--weight-bold);
+}
+.guide__title { font-size: var(--text-small); font-weight: var(--weight-semibold); margin-bottom: var(--space-1); }
+.guide__step p { font-size: var(--text-xs); color: var(--color-ink-2); line-height: 1.55; }
+
+.demo-block__hint { font-size: var(--text-small); color: var(--color-ink-2); max-width: 46rem; margin-top: calc(-1 * var(--space-2)); }
+.forecast__help { margin-top: calc(-1 * var(--space-2)); line-height: 1.5; }
+.forecast__key { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; vertical-align: -0.05em; background: var(--color-surface-3); }
+.forecast__key--on { background: var(--color-signal); }
+.run__guide { max-width: 46rem; font-size: var(--text-small); color: var(--color-ink-2); }
+.results__intro { display: grid; gap: var(--space-2); max-width: 44rem; }
+.guide__video { justify-self: start; margin-top: var(--space-1); color: var(--color-signal-ink); }

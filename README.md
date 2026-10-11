@@ -4,7 +4,7 @@
 ![pandas](https://img.shields.io/badge/pandas-Excel%20%2F%20CSV-150458?logo=pandas&logoColor=white)
 ![Selenium](https://img.shields.io/badge/Selenium-scraping%20%26%20formulaires-43B02A?logo=selenium&logoColor=white)
 ![schedule](https://img.shields.io/badge/schedule-TEST%20%2F%20PRODUCTION-4D7C0F)
-![Gmail](https://img.shields.io/badge/Email-Gmail%20SMTP-EA4335?logo=gmail&logoColor=white)
+![Gmail](https://img.shields.io/badge/Email-Gmail%20SMTP-EA4335)
 ![Frontend](https://img.shields.io/badge/Frontend-HTML%20%C2%B7%20CSS%20%C2%B7%20JS-0F1311)
 ![Streamlit](https://img.shields.io/badge/Streamlit-st.App-FF4B4B?logo=streamlit&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-108%20tests-0A9EDC?logo=pytest&logoColor=white)
@@ -12,9 +12,14 @@
 Projet d'automatisation de bout en bout : **six automatisations Python enchaînées en un pipeline** qui surveille un stock, envoie les alertes, remplit le formulaire de commande urgente, compile la production de la semaine, relève les prix d'un catalogue en ligne et relance le tout à son rythme. La routine qui demandait d'ouvrir des fichiers Excel, de recopier des listes et de surveiller des sites tourne désormais **seule, en boucle, en moins d'une seconde par cycle**.
 
 [![Tester la démo en ligne](https://img.shields.io/badge/Tester%20la%20d%C3%A9mo-en%20ligne%2C%20sans%20installation-cff24a?style=for-the-badge&logo=streamlit&logoColor=black&labelColor=0f1311)](https://automatisation-de-processus-cedric.streamlit.app)
+[![Voir la présentation](https://img.shields.io/badge/Voir%20la%20pr%C3%A9sentation-vid%C3%A9o%20de%2040%20secondes-0f1311?style=for-the-badge&logo=youtube&logoColor=cff24a)](https://gomugomuno01.github.io/automatisation-de-processus/presentation/)
 [![Télécharger un inventaire d'exemple](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-un%20inventaire%20d'exemple%20(.xlsx)-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white)](data/inventaire_gaming_multimedia.xlsx)
 
-*Démo : l'application complète, « Relais », hébergée gratuitement sur Streamlit Community Cloud ; si elle était en veille, elle peut mettre quelques instants à démarrer. En indiquant votre adresse dans la démo, vous recevez l'alerte de stock dans votre boîte mail. Inventaire : un des trois fichiers Excel d'exemple, à importer dans la démo après avoir modifié quelques quantités.*
+*Démo : l'application complète, « Relais », hébergée gratuitement sur Streamlit Community Cloud ; si elle était en veille, elle peut mettre quelques instants à démarrer. En indiquant votre adresse dans la démo, vous recevez l'alerte de stock dans votre boîte mail. Présentation : le projet en 40 secondes de motion design, sur une musique originale. Inventaire : un des trois fichiers Excel d'exemple, à importer dans la démo après avoir modifié quelques quantités.*
+
+[![Présentation vidéo de Relais, 40 secondes](assets/video/presentation-poster.jpg)](https://gomugomuno01.github.io/automatisation-de-processus/presentation/)
+
+*La présentation vidéo (40 s, 1080p, avec le son) : cliquer sur l'image pour la regarder sur GitHub Pages. Elle montre la routine manuelle, le pipeline qui détecte les ruptures et décide (email, formulaire), les six automatisations, les deux rythmes de planification, la démo en ligne et les chiffres clés. Elle est animée image par image en Python, sur une musique électro composée et synthétisée pour elle, sans aucun droit à céder.*
 
 ![L'application de démonstration en action](docs/images/demo-app.gif)
 
@@ -63,6 +68,7 @@ Dans une entreprise qui gère des stocks, quelqu'un ouvre chaque matin les fichi
 | **Centraliser la configuration** | Un seul fichier `.env` ; une variable manquante est signalée clairement plutôt que de faire planter le programme plus loin |
 | **Rendre le projet testable par tous** | Une application web au design propre (« Relais ») qui lance le vrai pipeline depuis le navigateur, avec inventaire modifiable ou importé, et l'alerte reçue pour de vrai dans sa boîte mail, sans installation |
 | **Mettre en ligne** | Démo publique hébergée gratuitement sur Streamlit Community Cloud, redéployée à chaque push, gardée éveillée par une visite automatique toutes les 6 heures |
+| **Présenter le projet** | Une vidéo de 40 s en motion design, animée image par image en Python, sur une musique originale composée par code, publiée sur GitHub Pages |
 | **Vérifier chaque résultat** | 108 tests automatisés (fonctions partagées, import, pipeline, envoi d'email, API web), lancés par GitHub Actions à chaque push |
 
 ### Ce que ce projet démontre
@@ -78,11 +84,12 @@ Dans une entreprise qui gère des stocks, quelqu'un ouvre chaque matin les fichi
 
 ### Pour découvrir le travail en 2 minutes
 
-1. Ouvrir la [démo en ligne](https://automatisation-de-processus-cedric.streamlit.app) et cliquer sur **Lancer le pipeline**.
-2. Descendre jusqu'à la **démo interactive** : modifier une quantité, régler le seuil, et observer la prévision changer avant de relancer.
-3. À l'étape 03 de la démo, indiquer son adresse email : l'alerte arrive pour de vrai, rapport Excel en pièce jointe.
-4. Parcourir [les fichiers générés](#9-les-fichiers-générés).
-5. Lire [les résultats détaillés](#10-analyses-et-résultats-détaillés).
+1. Regarder la [présentation vidéo](https://gomugomuno01.github.io/automatisation-de-processus/presentation/) (40 s).
+2. Ouvrir la [démo en ligne](https://automatisation-de-processus-cedric.streamlit.app) et cliquer sur **Lancer le pipeline**.
+3. Descendre jusqu'à la **démo interactive** : modifier une quantité, régler le seuil, et observer la prévision changer avant de relancer.
+4. À l'étape 03 de la démo, indiquer son adresse email : l'alerte arrive pour de vrai, rapport Excel en pièce jointe.
+5. Parcourir [les fichiers générés](#9-les-fichiers-générés).
+6. Lire [les résultats détaillés](#10-analyses-et-résultats-détaillés).
 
 ## 2. Les résultats en bref
 
@@ -102,6 +109,9 @@ Dans une entreprise qui gère des stocks, quelqu'un ouvre chaque matin les fichi
 | Inventaires d'exemple (Excel, 20 produits chacun) | [gaming](data/inventaire_gaming_multimedia.xlsx) · [bureau](data/inventaire_consommables_bureau.xlsx) · [stockage](data/inventaire_stockage_securite.xlsx) |
 | Production d'exemple (5 CSV journaliers par inventaire) | [data/production/](data/production/) |
 | Guide de mise en ligne (Streamlit Cloud, Render, Cloud Run, Docker) | [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) |
+| Présentation vidéo (40 s, musique originale libre de droits) | [Voir la présentation](https://gomugomuno01.github.io/automatisation-de-processus/presentation/) |
+| Musique originale de la vidéo (MP3, libre de droits) | [musique.mp3](assets/video/musique.mp3) |
+| Générateur de la vidéo et de la musique (Python) | [assets/video/source/](assets/video/source/) |
 
 ## 3. Contexte et objectifs
 
@@ -187,6 +197,8 @@ Le nom du fichier donne le jour (`Mardi.csv`) ; les jours sont remis dans l'ordr
 | **Streamlit Community Cloud** | Hébergement gratuit de la démo en ligne, redéployée à chaque push sur `main` |
 | **GitHub Actions** | Tests à chaque push, visite automatique de la démo toutes les 6 heures (Playwright) |
 | **Docker** | Image prête pour l'hébergement (Google Cloud Run, Render) |
+| **Pillow, numpy, ffmpeg** | Vidéo de présentation : 1 200 images dessinées en Python, musique synthétisée par code, encodage H.264 + AAC |
+| **GitHub Pages** | Publication de la page de présentation vidéo |
 | **Git / GitHub** | Versionnage, branches `main` et `dev` |
 
 ## 7. Méthodologie
@@ -326,7 +338,17 @@ L'interface est un frontend sur mesure, sans framework ni étape de build, servi
 - Trois pipelines au plus en parallèle ; le catalogue en ligne est lu au plus une fois toutes les 10 minutes, pour ménager le site.
 - L'envoi réel de l'email est encadré pour ne pas devenir un relais de spam : contenu verrouillé (inventaire d'exemple, seules les quantités changent, noms de produits vérifiés côté serveur), adresses validées (aucune injection d'en-tête possible), et limites de 3 envois par heure et par visiteur, 2 par adresse et par jour, 50 par jour au total. Les identifiants du compte d'envoi restent dans les secrets de l'hébergeur.
 
-### 8.8 Contrôle qualité
+### 8.8 Vidéo de présentation
+
+Une vidéo de 40 secondes présente le projet à quelqu'un qui n'ouvrira jamais le code : [la regarder](https://gomugomuno01.github.io/automatisation-de-processus/presentation/).
+
+- **Animée image par image en Python** : 1 200 images 1080p dessinées avec Pillow (en 3840×2160 puis réduites, pour des contours lisses), rendues en parallèle sur tous les cœurs en une quarantaine de secondes, puis encodées en H.264 avec ffmpeg.
+- **Une charte propre, « Signal »** : le pupitre d'une salle de contrôle, différent des vidéos des autres projets du portfolio. Fond graphite quadrillé, un seul signal vert-volt, Space Grotesk et Geist Mono, impulsions qui courent le long des fils, instrumentation de bord (chapitre, minutage, avancement), transitions en ligne de balayage, volets, grille qui commute et barre de relais.
+- **Sept scènes** calées sur 20 mesures à 120 BPM : le constat, le pipeline qui décide, les six automatisations, les deux rythmes de planification, la démo en ligne et les chiffres clés.
+- **Une musique originale** : électro minimale en ré mineur, entièrement synthétisée avec numpy (kick, clap, « clics de relais », basse roulante, arpège, nappes, cloches), sans aucun échantillon ni extrait d'une œuvre existante. Elle suit l'image : une note à chaque nœud du pipeline, une par carte allumée, le clic et la notification de la démo.
+- **Publiée sur GitHub Pages** par le workflow [`deploy-pages.yml`](.github/workflows/deploy-pages.yml), avec une page dédiée (chapitres cliquables, musique téléchargeable). Le générateur et sa documentation sont dans [`assets/video/source/`](assets/video/source/).
+
+### 8.9 Contrôle qualité
 
 | Fichier de tests | Ce qui est vérifié |
 |---|---|
@@ -534,6 +556,7 @@ automatisation-de-processus/
 │   ├── inventaire_*.xlsx        Les 3 inventaires d'exemple
 │   └── production/              5 CSV journaliers par inventaire
 ├── tests/                       Tests automatisés (pytest)
+├── assets/video/                Présentation : vidéo, affiche, musique, page web, générateur Python
 ├── docs/                        Guide de déploiement, captures de l'application
 ├── .streamlit/                  Réglages du serveur Streamlit
 ├── .github/                     Tests à chaque push, visite de la démo toutes les 6 h
@@ -626,6 +649,7 @@ Le guide complet, avec les autres hébergeurs, est dans [`docs/DEPLOIEMENT.md`](
 
 - Polices de l'interface : [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk), [Geist et Geist Mono](https://vercel.com/font) (SIL Open Font License).
 - Bibliothèques : pandas, openpyxl, Selenium, schedule, python-dotenv, Streamlit, Starlette, pytest ; Playwright pour la visite automatique de la démo.
+- Vidéo de présentation : animée avec [Pillow](https://python-pillow.org), encodée avec ffmpeg ; musique composée et synthétisée pour le projet par [`music.py`](assets/video/source/music.py), sans aucun échantillon externe, libre de droits.
 - Sites de test automatisés : boutique de [webscraper.io](https://webscraper.io/test-sites) et formulaire de [selenium.dev](https://www.selenium.dev/selenium/web/web-form.html).
 
 **Auteur :** Dibie Elisee Jules Cedric KOUADIO ([@GomuGomuNo01](https://github.com/GomuGomuNo01))

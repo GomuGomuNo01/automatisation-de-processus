@@ -178,10 +178,20 @@
               <span class="btn__label">Configurer la démo<svg class="icon btn__arrow btn__arrow--down" aria-hidden="true"><use href="#i-arrow-down"/></svg></span>
             </a>
           </div>
-          <ul class="hero__meta" data-reveal="fade-up" style="--reveal-index:4">
+          <dl class="hero__choices" data-reveal="fade-up" style="--reveal-index:4">
+            <div class="hero__choice">
+              <dt><svg class="icon icon--sm" aria-hidden="true"><use href="#i-play"/></svg>Lancer le pipeline</dt>
+              <dd>Exécute tout de suite les six automatisations sur un inventaire d'exemple, en quelques secondes, puis affiche les résultats et les fichiers à télécharger.</dd>
+            </div>
+            <div class="hero__choice">
+              <dt><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sliders"/></svg>Configurer la démo</dt>
+              <dd>Descend jusqu'à la démo pour choisir l'inventaire, modifier des stocks, régler le seuil d'urgence et indiquer votre email avant de lancer.</dd>
+            </div>
+          </dl>
+          <ul class="hero__meta" data-reveal="fade-up" style="--reveal-index:5">
             <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-clock"/></svg>Environ 1 seconde par cycle</li>
             <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-sheet"/></svg>Jusqu'à 5 fichiers générés</li>
-            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-user"/></svg>Sans inscription</li>
+            <li><svg class="icon icon--sm" aria-hidden="true"><use href="#i-user"/></svg>Sans inscription ni installation</li>
           </ul>
         </div>
 
@@ -224,6 +234,45 @@
           <div class="fact" data-reveal="fade-up" style="--reveal-index:2"><dt class="fact__label">questions pour tout lancer</dt><dd class="fact__value" data-count="2">2</dd></div>
           <div class="fact" data-reveal="fade-up" style="--reveal-index:3"><dt class="fact__label">intervention ensuite</dt><dd class="fact__value" data-count="0">0</dd></div>
         </dl>
+      </div>
+    </section>
+
+    <!-- ============ Guide rapide : tester la démo en 3 étapes ============ -->
+    <section class="guide" aria-labelledby="guide-titre">
+      <div class="container">
+        <div class="guide__card">
+          <div class="guide__intro">
+            <p class="eyebrow"><span class="eyebrow__index">›</span>Mode d'emploi</p>
+            <h2 class="h3" id="guide-titre">Tester la démo en 3 étapes</h2>
+            <p class="muted small">Rien à installer, aucun compte à créer. Comptez une minute.</p>
+            <a class="link-arrow guide__video" href="https://gomugomuno01.github.io/automatisation-de-processus/presentation/" target="_blank" rel="noopener">
+              <svg class="icon icon--sm" aria-hidden="true"><use href="#i-play"/></svg>Ou regardez d'abord la vidéo de 40 s<span class="visually-hidden"> (nouvel onglet)</span>
+            </a>
+          </div>
+          <ol class="guide__steps">
+            <li class="guide__step">
+              <span class="guide__num mono">1</span>
+              <div>
+                <h3 class="guide__title">Réglez (facultatif)</h3>
+                <p>Dans la <a class="link" href="#demo">démo interactive</a>, choisissez un inventaire, modifiez des quantités et indiquez votre email pour recevoir l'alerte.</p>
+              </div>
+            </li>
+            <li class="guide__step">
+              <span class="guide__num mono">2</span>
+              <div>
+                <h3 class="guide__title">Lancez</h3>
+                <p>Cliquez sur <strong>Lancer le pipeline</strong>&nbsp;: une page de suivi s'ouvre et montre chaque automatisation s'exécuter, avec son journal.</p>
+              </div>
+            </li>
+            <li class="guide__step">
+              <span class="guide__num mono">3</span>
+              <div>
+                <h3 class="guide__title">Consultez et téléchargez</h3>
+                <p>En bas de cette page, un onglet par automatisation présente le résultat&nbsp;; les fichiers Excel et l'email se téléchargent à côté.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
       </div>
     </section>
 
@@ -500,7 +549,7 @@
         <div class="section__head">
           <p class="eyebrow" data-reveal="fade-up"><span class="eyebrow__index">05</span>Démo interactive</p>
           <h2 class="h2" id="demo-titre" tabindex="-1" data-reveal="fade-up" style="--reveal-index:1">Réglez, modifiez un stock, lancez.</h2>
-          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Choisissez un inventaire ou importez le vôtre, changez une quantité&nbsp;: le panneau de droite montre en direct ce que le pipeline va faire.</p>
+          <p class="lead" data-reveal="fade-up" style="--reveal-index:2">Remplissez les blocs de haut en bas&nbsp;: <strong>01</strong> l'inventaire à surveiller, <strong>02</strong> les réglages, <strong>03</strong> votre email (facultatif). Le panneau <strong>Prévision</strong>, à droite (en bas sur mobile), indique en direct ce qui va se déclencher&nbsp;; cliquez ensuite sur <strong>Lancer le pipeline</strong>.</p>
         </div>
 
         <form class="demo" id="demo-form" novalidate data-reveal="fade-up" style="--reveal-index:2">
@@ -508,6 +557,9 @@
             <!-- 01 Inventaire -->
             <fieldset class="demo-block">
               <legend class="demo-block__legend"><span class="mono demo-block__num">01</span>Inventaire</legend>
+              <p class="demo-block__hint">
+                Choisissez l'un des trois inventaires d'exemple (20 produits chacun), ou <strong>Votre fichier</strong> pour importer le vôtre. Puis, dans le tableau, changez une quantité avec <strong>−</strong> et <strong>+</strong> ou en tapant un nombre&nbsp;: un produit passe en <strong>Rupture</strong> dès que sa quantité est inférieure ou égale à son seuil.
+              </p>
               <div class="inv-choices" role="radiogroup" aria-label="Inventaire à surveiller" data-inventory-choices>
                 <!-- Rempli par demo.js ; squelettes en attendant -->
                 <span class="inv-choice inv-choice--skeleton skeleton" aria-hidden="true"></span>
@@ -584,6 +636,7 @@
             <!-- 02 Paramètres -->
             <fieldset class="demo-block">
               <legend class="demo-block__legend"><span class="mono demo-block__num">02</span>Paramètres</legend>
+              <p class="demo-block__hint">Les mêmes réglages que le fichier <code class="mono">.env</code> de la version en ligne de commande. Les valeurs par défaut conviennent pour un premier essai.</p>
               <div class="params">
                 <div class="field">
                   <span class="field__label" id="mode-label">Mode d'exécution</span>
@@ -597,7 +650,7 @@
                       <span class="segmented__label"><span class="segmented__title">PRODUCTION</span><span class="segmented__desc">heures · hebdo</span></span>
                     </label>
                   </div>
-                  <p class="field__hint">Le mode ne change que le rythme&nbsp;: voyez-le dans l'onglet Planification du résultat.</p>
+                  <p class="field__hint">En local, TEST relance les tâches toutes les 1 à 3 minutes et PRODUCTION toutes les heures (rapport le vendredi à 8&nbsp;h). Ici, le pipeline s'exécute une fois&nbsp;; le mode choisi change le calendrier affiché dans l'onglet <strong>Planification</strong> du résultat.</p>
                 </div>
 
                 <div class="field">
@@ -608,7 +661,7 @@
                       <input class="stepper__input" type="number" name="seuil_formulaire" value="3" min="1" max="50" inputmode="numeric" aria-labelledby="seuil-label" aria-describedby="seuil-hint">
                       <button class="stepper__btn" type="button" data-step="1" aria-label="Augmenter le seuil"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-plus"/></svg></button>
                     </div>
-                    <p class="field__hint" id="seuil-hint">ruptures ou plus déclenchent le formulaire (1 à 50).</p>
+                    <p class="field__hint" id="seuil-hint">Nombre de ruptures à partir duquel le formulaire de commande urgente est rempli et envoyé automatiquement (Cas 6). Avec 3, il part dès 3 produits en rupture. Entre 1 et 50.</p>
                   </div>
                   <p class="field__error" data-error="seuil_formulaire" hidden></p>
                 </div>
@@ -617,12 +670,12 @@
                   <label class="switch">
                     <input class="switch__input" type="checkbox" name="rapport" checked>
                     <span class="switch__track" aria-hidden="true"><span class="switch__thumb"><svg class="icon"><use href="#i-check"/></svg></span></span>
-                    <span class="switch__text"><span class="switch__title">Rapport hebdomadaire</span><span class="switch__desc">Cas 2 · fusion des CSV de production</span></span>
+                    <span class="switch__text"><span class="switch__title">Rapport hebdomadaire</span><span class="switch__desc">Cas 2 · additionne la production des 5 jours de la semaine. Désactivez pour ignorer cette étape.</span></span>
                   </label>
                   <label class="switch">
                     <input class="switch__input" type="checkbox" name="scraping" checked>
                     <span class="switch__track" aria-hidden="true"><span class="switch__thumb"><svg class="icon"><use href="#i-check"/></svg></span></span>
-                    <span class="switch__text"><span class="switch__title">Scraping des prix</span><span class="switch__desc">Cas 5 · <span data-scraping-category>catalogue en ligne</span></span></span>
+                    <span class="switch__text"><span class="switch__title">Scraping des prix</span><span class="switch__desc">Cas 5 · relève les prix du <span data-scraping-category>catalogue en ligne</span> sur un site de test. Désactivez pour ignorer cette étape.</span></span>
                   </label>
                 </div>
               </div>
@@ -632,7 +685,7 @@
             <fieldset class="demo-block mail-config" data-mail-config>
               <legend class="demo-block__legend"><span class="mono demo-block__num">03</span>Recevoir l'alerte par email</legend>
               <p class="mail-config__intro">
-                Facultatif&nbsp;: indiquez votre adresse et l'alerte du Cas 3 arrive vraiment dans votre boîte, rapport Excel en pièce jointe. Sans adresse, l'email se télécharge en .eml.
+                Facultatif&nbsp;: saisissez votre adresse dans <strong>Destinataire</strong>, lancez le pipeline, puis ouvrez votre boîte mail&nbsp;: l'alerte du Cas 3 y arrive en quelques secondes, rapport Excel en pièce jointe (regardez aussi les indésirables). Sans adresse, l'email se télécharge en .eml sur la page des résultats.
               </p>
               <div class="mail-config__grid">
                 <div class="field">
@@ -658,8 +711,9 @@
           <!-- Prévision en direct + lancement -->
           <aside class="demo__forecast" aria-labelledby="prevision-titre">
             <div class="forecast corners">
-              <p class="eyebrow"><span class="eyebrow__index">03</span>Prévision</p>
+              <p class="eyebrow"><span class="eyebrow__index">04</span>Prévision et lancement</p>
               <h3 class="h3 forecast__title" id="prevision-titre">Ce que le pipeline va faire</h3>
+              <p class="forecast__help xs muted">Mis à jour à chaque modification. <span class="forecast__key forecast__key--on" aria-hidden="true"></span> s'exécutera, <span class="forecast__key" aria-hidden="true"></span> sera ignoré, avec la raison en dessous.</p>
               <div class="forecast__figure">
                 <span class="forecast__value" data-forecast-ruptures>—</span>
                 <span class="forecast__unit">rupture(s)<br><span class="muted" data-forecast-total>sur — produits</span></span>
@@ -676,7 +730,7 @@
                 <span class="btn__label">Lancer le pipeline<svg class="icon btn__arrow" aria-hidden="true"><use href="#i-arrow-right"/></svg></span>
                 <span class="btn__state btn__state--loading"><span class="spinner" aria-hidden="true"></span>Lancement…</span>
               </button>
-              <p class="forecast__note xs muted">Rien n'est conservé&nbsp;: les fichiers restent téléchargeables une heure.</p>
+              <p class="forecast__note xs muted">Le clic ouvre la page de suivi de l'exécution, puis les résultats. Rien n'est conservé&nbsp;: les fichiers restent téléchargeables une heure.</p>
             </div>
           </aside>
         </form>
@@ -786,7 +840,7 @@
   <main class="view" id="vue-execution" hidden>
     <section class="run container" aria-labelledby="run-titre">
       <a class="link-arrow link-arrow--back run__back" href="#demo" data-nav="demo">
-        <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-left"/></svg>Modifier les réglages
+        <svg class="icon icon--sm" aria-hidden="true"><use href="#i-arrow-left"/></svg>Modifier les réglages et relancer
       </a>
 
       <header class="run__head">
@@ -794,6 +848,7 @@
           <p class="eyebrow"><span class="eyebrow__index">›</span>Exécution du pipeline</p>
           <h1 class="h1" id="run-titre" tabindex="-1" data-run-title>Pipeline en cours…</h1>
           <ul class="run__meta" data-run-meta></ul>
+          <p class="run__guide">À gauche, les six automatisations s'exécutent dans l'ordre&nbsp;: chacune affiche ce qu'elle a fait ou pourquoi elle a été ignorée. À droite, le journal montre ce que le programme écrit. Les <strong>résultats</strong> et les <strong>fichiers</strong> apparaissent plus bas à la fin.</p>
         </div>
         <div class="run__status">
           <span class="status-pill" data-state="running" data-run-status><span class="status-pill__dot" aria-hidden="true"></span><span data-run-status-text>En cours</span></span>
@@ -825,7 +880,10 @@
 
       <section class="results" data-results aria-labelledby="resultats-titre" hidden>
         <div class="results__head">
-          <h2 class="h2 results__title" id="resultats-titre" tabindex="-1">Résultats</h2>
+          <div class="results__intro">
+            <h2 class="h2 results__title" id="resultats-titre" tabindex="-1">Résultats</h2>
+            <p class="muted">Cliquez sur un onglet pour voir le résultat de chaque automatisation. Les fichiers générés se téléchargent dans le panneau <strong>Fichiers générés</strong>, un par un, ou tous ensemble avec <strong>Tout télécharger</strong>.</p>
+          </div>
           <div class="results__actions">
             <a class="btn btn--primary" href="#" data-archive download>
               <span class="btn__label"><svg class="icon icon--sm" aria-hidden="true"><use href="#i-download"/></svg>Tout télécharger (.zip)</span>
@@ -872,6 +930,7 @@
             <li><a href="#fonctionnalites">Fonctionnalités</a></li>
             <li><a href="#demo">Démo interactive</a></li>
             <li><a href="#faq">Questions fréquentes</a></li>
+            <li><a href="https://gomugomuno01.github.io/automatisation-de-processus/presentation/" target="_blank" rel="noopener">Présentation vidéo (40 s)<span class="visually-hidden"> (nouvel onglet)</span></a></li>
           </ul>
         </div>
         <div>

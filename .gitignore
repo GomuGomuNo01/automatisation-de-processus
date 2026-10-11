@@ -30,3 +30,7 @@ Thumbs.db
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 .pytest_cache/
+
+# ── Vidéo de présentation : polices téléchargées et aperçus ─────────────────
+assets/video/source/.fonts/
+assets/video/source/apercu*.png

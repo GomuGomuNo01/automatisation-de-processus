@@ -19,3 +19,4 @@ docs/
 tests/
 conftest.py
 requirements-dev.txt
+assets/
