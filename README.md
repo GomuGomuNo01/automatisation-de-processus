@@ -14,7 +14,7 @@ Projet d'automatisation de bout en bout : **six automatisations Python enchaîn�
 [![Tester la démo en ligne](https://img.shields.io/badge/Tester%20la%20d%C3%A9mo-en%20ligne%2C%20sans%20installation-cff24a?style=for-the-badge&logo=streamlit&logoColor=black&labelColor=0f1311)](https://automatisation-de-processus-cedric.streamlit.app)
 [![Télécharger un inventaire d'exemple](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-un%20inventaire%20d'exemple%20(.xlsx)-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white)](data/inventaire_gaming_multimedia.xlsx)
 
-*Démo : l'application complète, « Relais », hébergée gratuitement sur Streamlit Community Cloud ; si elle était en veille, elle peut mettre quelques instants à démarrer. Inventaire : un des trois fichiers Excel d'exemple, à importer dans la démo après avoir modifié quelques quantités.*
+*Démo : l'application complète, « Relais », hébergée gratuitement sur Streamlit Community Cloud ; si elle était en veille, elle peut mettre quelques instants à démarrer. En indiquant votre adresse dans la démo, vous recevez l'alerte de stock dans votre boîte mail. Inventaire : un des trois fichiers Excel d'exemple, à importer dans la démo après avoir modifié quelques quantités.*
 
 ![L'application de démonstration en action](docs/images/demo-app.gif)
 
@@ -80,8 +80,9 @@ Dans une entreprise qui gère des stocks, quelqu'un ouvre chaque matin les fichi
 
 1. Ouvrir la [démo en ligne](https://automatisation-de-processus-cedric.streamlit.app) et cliquer sur **Lancer le pipeline**.
 2. Descendre jusqu'à la **démo interactive** : modifier une quantité, régler le seuil, et observer la prévision changer avant de relancer.
-3. Parcourir [les fichiers générés](#9-les-fichiers-générés).
-4. Lire [les résultats détaillés](#10-analyses-et-résultats-détaillés).
+3. À l'étape 03 de la démo, indiquer son adresse email : l'alerte arrive pour de vrai, rapport Excel en pièce jointe.
+4. Parcourir [les fichiers générés](#9-les-fichiers-générés).
+5. Lire [les résultats détaillés](#10-analyses-et-résultats-détaillés).
 
 ## 2. Les résultats en bref
 
@@ -233,7 +234,11 @@ def detecter_ruptures(df: pd.DataFrame) -> pd.DataFrame:
 - Le rapport Excel du Cas 1 est joint au message (MIME, encodage base64).
 - Envoi par Gmail en SMTP SSL (port 465) avec un mot de passe d'application ; les noms de produits sont échappés dans le HTML.
 
-![Email d'alerte reçu dans Gmail, rapport Excel en pièce jointe](docs/email_alerte.png)
+| Envoyé depuis la ligne de commande | Envoyé depuis la démo en ligne |
+|---|---|
+| ![Email d'alerte reçu dans Gmail, rapport Excel en pièce jointe](docs/email_alerte.png) | ![Email d'alerte envoyé par la démo en ligne](docs/images/email-recu-demo.png) |
+
+*À droite, l'alerte déclenchée depuis la [démo en ligne](https://automatisation-de-processus-cedric.streamlit.app) : le visiteur a indiqué son adresse à l'étape 03, et l'email est arrivé en quelques secondes, expédié par « Relais · alertes stock » avec le rapport Excel en pièce jointe.*
 
 ### 8.3 Cas 6 : formulaire d'urgence
 
@@ -541,7 +546,8 @@ automatisation-de-processus/
 
 1. Ouvrir la [démo en ligne](https://automatisation-de-processus-cedric.streamlit.app). Si personne ne l'a ouverte depuis 12 heures, Streamlit affiche une page de mise en veille : cliquer sur le bouton de réveil, puis patienter environ une minute.
 2. Cliquer sur **Lancer le pipeline**, ou régler la **démo interactive** (inventaire, quantités, mode, seuil), voire importer son propre fichier.
-3. Télécharger les fichiers générés, un par un ou en .zip.
+3. Pour recevoir l'alerte par email : renseigner **Destinataire** (`EMAIL_DESTINATAIRE`) à l'étape 03 avant de lancer. Elle peut arriver dans les indésirables la première fois.
+4. Télécharger les fichiers générés, un par un ou en .zip.
 
 **Option 2 : installer le projet sur son poste**
 
