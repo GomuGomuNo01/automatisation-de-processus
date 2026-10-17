@@ -14,6 +14,7 @@ ce que le lien de l'archive des fichiers soit prêt.
 import os
 import re
 import sys
+import time
 
 from playwright.sync_api import TimeoutError as DelaiDepasse
 from playwright.sync_api import sync_playwright
@@ -24,6 +25,9 @@ DELAI_PAGE      = 120_000  # ms : chargement de la page hôte de Streamlit
 DELAI_VEILLE    = 15_000   # ms : apparition éventuelle du bouton de réveil
 DELAI_DEMARRAGE = 300_000  # ms : redémarrage complet après une mise en veille
 DELAI_PIPELINE  = 120_000  # ms : exécution du pipeline
+DELAI_PRESENCE  = 20_000   # ms : on reste sur la page après la réponse (compte comme une vraie visite)
+TENTATIVES      = 3        # une visite échouée est refaite avant de signaler une erreur
+PAUSE_TENTATIVE = 60       # s entre deux tentatives
 
 
 def visiter(url: str) -> None:
@@ -47,6 +51,7 @@ def visiter(url: str) -> None:
             appli.locator(".hero [data-action='run-default']").click()
             appli.locator("[data-archive][href*='api/executions']").wait_for(state="attached", timeout=DELAI_PIPELINE)
             print("Pipeline exécuté : l'application répond.")
+            page.wait_for_timeout(DELAI_PRESENCE)
         except Exception:
             page.screenshot(path=CAPTURE_ECHEC, full_page=True)
             raise
@@ -58,4 +63,12 @@ if __name__ == "__main__":
     adresse = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("STREAMLIT_URL")
     if not adresse:
         sys.exit("Indiquez l'adresse de la démo (argument ou variable STREAMLIT_URL).")
-    visiter(adresse)
+    for essai in range(1, TENTATIVES + 1):
+        try:
+            visiter(adresse)
+            break
+        except Exception as erreur:
+            print(f"Tentative {essai}/{TENTATIVES} échouée : {erreur}")
+            if essai == TENTATIVES:
+                raise
+            time.sleep(PAUSE_TENTATIVE)

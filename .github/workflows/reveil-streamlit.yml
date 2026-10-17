@@ -1,4 +1,5 @@
-# Empêche la démo de s'endormir sur Streamlit Community Cloud (veille après 12 h sans visite).
+# Empêche la démo de s'endormir sur Streamlit Community Cloud (veille annoncée après 12 h sans visite,
+# mais constatée parfois en moins de 5 h : d'où une visite toutes les heures).
 # Un ping HTTP ne suffit pas : un vrai navigateur ouvre la page et lance le pipeline
 # (.github/scripts/reveil_streamlit.py). En cas d'échec, une capture est jointe à l'exécution.
 # Inactif tant que la variable de dépôt STREAMLIT_URL n'est pas définie :
@@ -9,17 +10,21 @@ name: Réveiller la démo Streamlit
 
 on:
   schedule:
-    - cron: "23 */6 * * *"  # toutes les 6 heures (minute décalée : moins d'attente chez GitHub)
+    - cron: "23 * * * *"  # toutes les heures (minute décalée : moins d'attente chez GitHub)
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: reveil-streamlit
+  cancel-in-progress: false
+
 jobs:
   visite:
     if: ${{ vars.STREAMLIT_URL != '' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
